@@ -1,0 +1,11 @@
+{
+  "name": "inkcard",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently -n web,api -c blue,green \"pnpm --filter web dev\" \"pnpm --filter api dev\"",
+    "check:structure": "python3 scripts/check_structure.py"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}
