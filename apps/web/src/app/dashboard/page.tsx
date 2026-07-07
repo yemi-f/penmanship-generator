@@ -1,0 +1,36 @@
+import { redirect } from "next/navigation";
+
+import { auth, signOut } from "@/lib/auth";
+import { Button } from "@/components/ui/button";
+import { ProfileCheck } from "@/components/Dashboard/ProfileCheck";
+
+export default async function DashboardPage() {
+  const session = await auth();
+  if (!session?.user) {
+    redirect("/");
+  }
+
+  return (
+    <main className="mx-auto flex max-w-2xl flex-col gap-6 p-8">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold">Dashboard</h1>
+          <p className="text-sm text-muted-foreground">
+            Signed in as {session.user.email}
+          </p>
+        </div>
+        <form
+          action={async () => {
+            "use server";
+            await signOut({ redirectTo: "/" });
+          }}
+        >
+          <Button type="submit" variant="outline">
+            Sign out
+          </Button>
+        </form>
+      </div>
+      <ProfileCheck />
+    </main>
+  );
+}

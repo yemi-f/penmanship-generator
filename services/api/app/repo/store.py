@@ -36,6 +36,10 @@ def get_object(key: str) -> bytes:
     return _backend().get(key)
 
 
+def object_exists(key: str) -> bool:
+    return _backend().exists(key)
+
+
 def delete_object(key: str) -> None:
     _backend().delete(key)
 
