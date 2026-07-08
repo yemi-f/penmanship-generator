@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { auth, signOut } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { ProfileCheck } from "@/components/Dashboard/ProfileCheck";
+import { SampleLibrary } from "@/components/Dashboard/SampleLibrary";
 
 export default async function DashboardPage() {
   const session = await auth();
@@ -31,6 +32,7 @@ export default async function DashboardPage() {
         </form>
       </div>
       <ProfileCheck />
+      <SampleLibrary />
     </main>
   );
 }

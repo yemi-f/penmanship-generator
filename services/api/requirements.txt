@@ -5,3 +5,5 @@ genblaze-s3
 genblaze-core
 genblaze-gmicloud
 pyjwt
+nanoid
+python-multipart
