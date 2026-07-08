@@ -129,6 +129,19 @@ There is no cleanup for abandoned previews (flow never reaches the Message step,
 
 ---
 
+## 3D Viewer Texture Loading — why textures don't use presigned URLs
+
+B2 presigned URLs have no CORS headers (confirmed: no `Access-Control-Allow-Origin`, `OPTIONS` preflight returns 403), and `genblaze_s3` exposes no bucket CORS configuration. A plain `<img>` tag doesn't care — but WebGL texture uploads (`@react-three/fiber`/`drei`'s `useTexture`) are stricter and will fail (tainted-canvas security error) against a cross-origin response lacking CORS headers.
+
+Fix: card images used as 3D textures are never loaded from B2 directly. Instead:
+- `GET /api/cards/{card_id}/textures/{design|writing}` (owner, authenticated) and `GET /api/share/{share_token}/textures/{design|writing}` (public) stream the raw PNG bytes through our own FastAPI backend, which already sends CORS headers via `main.py`'s `CORSMiddleware`.
+- The **public** share-view texture URLs can be passed straight to `useTexture` — no auth needed, our CORS headers make them fetchable directly.
+- The **owner** view can't do that (the endpoint requires a Bearer token, which a texture loader can't attach) — so it fetches via `apiFetch`, converts the response to a `Blob`, and passes a `URL.createObjectURL(blob)` (same-origin, no CORS concern at all) to `useTexture` instead. See `lib/useBlobTextureUrl.ts`.
+
+Downloads (the "Download design"/"Download handwriting" buttons) are unaffected by any of this — a plain `<a href download>` is just navigation, not a scripted cross-origin read, so they still use the ordinary presigned URLs from `GET /api/cards/{card_id}` / `GET /api/share/{share_token}`.
+
+---
+
 ## Card Status Lifecycle
 
 ```

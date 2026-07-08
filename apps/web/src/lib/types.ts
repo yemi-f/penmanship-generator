@@ -31,3 +31,30 @@ export type GenerationCompleteData = {
   design_url: string;
   share_url: string;
 };
+
+export type CardStatus = "pending" | "complete" | "failed";
+
+export type CardMeta = {
+  card_id: string;
+  user_id: string;
+  created_at: string;
+  card_type: CardType;
+  orientation: Orientation;
+  design_description: string;
+  design_url: string | null;
+  handwriting_style: string;
+  handwriting_label: string;
+  message: string;
+  status: CardStatus;
+  writing_face_url: string | null;
+  share_token: string;
+  design_preview_id: string | null;
+};
+
+export type ShareData = {
+  card_type: CardType;
+  orientation: Orientation;
+  design_url: string | null;
+  writing_face_url: string | null;
+  created_at: string;
+};

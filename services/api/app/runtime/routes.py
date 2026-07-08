@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
+from typing import Literal
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Response, UploadFile, status
 from fastapi.responses import StreamingResponse
 from nanoid import generate as generate_nanoid
 
@@ -117,3 +118,76 @@ def stream_card(card_id: str, user_id: str = Depends(current_user)) -> Streaming
         cards_service.stream_generation(user_id, card_id),
         media_type="text/event-stream",
     )
+
+
+@router.get("/api/cards/{card_id}")
+def get_card(card_id: str, user_id: str = Depends(current_user)) -> dict:
+    meta_key = f"users/{user_id}/cards/{card_id}/meta.json"
+    if not store.object_exists(meta_key):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="card not found")
+
+    meta = store.get_json(meta_key)
+    if meta["status"] == "complete":
+        meta["design_url"] = store.presign_url(f"users/{user_id}/cards/{card_id}/design-face.png")
+        meta["writing_face_url"] = store.presign_url(f"users/{user_id}/cards/{card_id}/writing-face.png")
+    return meta
+
+
+@router.delete("/api/cards/{card_id}")
+def delete_card(card_id: str, user_id: str = Depends(current_user)) -> dict:
+    meta_key = f"users/{user_id}/cards/{card_id}/meta.json"
+    if not store.object_exists(meta_key):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="card not found")
+
+    meta = store.get_json(meta_key)
+    store.delete_object(meta_key)
+    store.delete_object(f"users/{user_id}/cards/{card_id}/design-face.png")
+    store.delete_object(f"users/{user_id}/cards/{card_id}/writing-face.png")
+    store.remove_from_index(f"users/{user_id}/cards/index.json", card_id)
+    store.delete_object(f"share-tokens/{meta['share_token']}.json")
+
+    return {"deleted": True}
+
+
+@router.get("/api/cards/{card_id}/textures/{face}")
+def get_card_texture(card_id: str, face: Literal["design", "writing"], user_id: str = Depends(current_user)) -> Response:
+    filename = "design-face.png" if face == "design" else "writing-face.png"
+    key = f"users/{user_id}/cards/{card_id}/{filename}"
+    if not store.object_exists(key):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="texture not found")
+    return Response(content=store.get_object(key), media_type="image/png")
+
+
+@router.get("/api/share/{share_token}")
+def get_share(share_token: str) -> dict:
+    resolved = store.read_share_token(share_token)
+    if resolved is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="share link not found")
+
+    meta_key = f"users/{resolved['user_id']}/cards/{resolved['card_id']}/meta.json"
+    if not store.object_exists(meta_key):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="card not found")
+
+    meta = store.get_json(meta_key)
+    is_complete = meta["status"] == "complete"
+    base = f"users/{resolved['user_id']}/cards/{resolved['card_id']}"
+    return {
+        "card_type": meta["card_type"],
+        "orientation": meta["orientation"],
+        "design_url": store.presign_url(f"{base}/design-face.png") if is_complete else None,
+        "writing_face_url": store.presign_url(f"{base}/writing-face.png") if is_complete else None,
+        "created_at": meta["created_at"],
+    }
+
+
+@router.get("/api/share/{share_token}/textures/{face}")
+def get_share_texture(share_token: str, face: Literal["design", "writing"]) -> Response:
+    resolved = store.read_share_token(share_token)
+    if resolved is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="share link not found")
+
+    filename = "design-face.png" if face == "design" else "writing-face.png"
+    key = f"users/{resolved['user_id']}/cards/{resolved['card_id']}/{filename}"
+    if not store.object_exists(key):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="texture not found")
+    return Response(content=store.get_object(key), media_type="image/png")
