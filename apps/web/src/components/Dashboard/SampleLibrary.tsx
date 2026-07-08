@@ -136,18 +136,6 @@ export function SampleLibrary() {
       ) : (
         <>
           <div>
-            <h3 className="mb-2 text-sm font-medium text-muted-foreground">Default styles</h3>
-            <div className="flex flex-wrap gap-3">
-              {defaults.map((d) => (
-                <div key={d.slug} className="w-40 rounded-md border p-2">
-                  <img src={d.preview_url} alt={d.label} className="w-full rounded" />
-                  <p className="mt-1 text-xs">{d.label}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div>
             <h3 className="mb-2 text-sm font-medium text-muted-foreground">My samples</h3>
             {saved.length === 0 ? (
               <p className="text-sm text-muted-foreground">No saved samples yet.</p>
@@ -186,6 +174,18 @@ export function SampleLibrary() {
                 ))}
               </div>
             )}
+          </div>
+
+          <div>
+            <h3 className="mb-2 text-sm font-medium text-muted-foreground">Default styles</h3>
+            <div className="flex flex-wrap gap-3">
+              {defaults.map((d) => (
+                <div key={d.slug} className="w-40 rounded-md border p-2">
+                  <img src={d.preview_url} alt={d.label} className="w-full rounded" />
+                  <p className="mt-1 text-xs">{d.label}</p>
+                </div>
+              ))}
+            </div>
           </div>
         </>
       )}

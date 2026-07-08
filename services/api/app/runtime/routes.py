@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 from typing import Literal
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, Response, UploadFile, status
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Response, UploadFile, status
 from fastapi.responses import StreamingResponse
 from nanoid import generate as generate_nanoid
 
@@ -17,6 +17,23 @@ router = APIRouter()
 
 ALLOWED_SAMPLE_CONTENT_TYPES = {"image/png", "image/jpeg"}
 MAX_SAMPLE_BYTES = 5 * 1024 * 1024
+
+
+def _refresh_card_urls(meta: dict, base: str) -> None:
+    """Presign design_url/writing_face_url for a complete card, or null them out.
+
+    Mutates meta in place. The null-out branch matters for cards created before
+    the design-generation architecture change: their stored meta.json may still
+    carry a stale design_url (from the old always-set-at-creation static-preset
+    scheme) even when status != "complete" — without this, a failed legacy card
+    would present a design_url pointing at a real (but irrelevant) image.
+    """
+    if meta["status"] == "complete":
+        meta["design_url"] = store.presign_url(f"{base}/design-face.png")
+        meta["writing_face_url"] = store.presign_url(f"{base}/writing-face.png")
+    else:
+        meta["design_url"] = None
+        meta["writing_face_url"] = None
 
 
 @router.get("/health")
@@ -110,6 +127,27 @@ def create_card(req: CardCreateRequest, user_id: str = Depends(current_user)) ->
     return {"card_id": meta.card_id, "share_token": meta.share_token}
 
 
+@router.get("/api/cards")
+def list_cards(
+    limit: int = Query(default=20, ge=1, le=100),
+    offset: int = Query(default=0, ge=0),
+    user_id: str = Depends(current_user),
+) -> dict:
+    all_ids = store.read_index(f"users/{user_id}/cards/index.json")
+    page_ids = all_ids[offset : offset + limit]
+
+    cards = []
+    for card_id in page_ids:
+        meta_key = f"users/{user_id}/cards/{card_id}/meta.json"
+        if not store.object_exists(meta_key):
+            continue
+        meta = store.get_json(meta_key)
+        _refresh_card_urls(meta, f"users/{user_id}/cards/{card_id}")
+        cards.append(meta)
+
+    return {"cards": cards, "total": len(all_ids)}
+
+
 @router.get("/api/cards/{card_id}/stream")
 def stream_card(card_id: str, user_id: str = Depends(current_user)) -> StreamingResponse:
     if not store.object_exists(f"users/{user_id}/cards/{card_id}/meta.json"):
@@ -127,9 +165,7 @@ def get_card(card_id: str, user_id: str = Depends(current_user)) -> dict:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="card not found")
 
     meta = store.get_json(meta_key)
-    if meta["status"] == "complete":
-        meta["design_url"] = store.presign_url(f"users/{user_id}/cards/{card_id}/design-face.png")
-        meta["writing_face_url"] = store.presign_url(f"users/{user_id}/cards/{card_id}/writing-face.png")
+    _refresh_card_urls(meta, f"users/{user_id}/cards/{card_id}")
     return meta
 
 
@@ -169,13 +205,13 @@ def get_share(share_token: str) -> dict:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="card not found")
 
     meta = store.get_json(meta_key)
-    is_complete = meta["status"] == "complete"
     base = f"users/{resolved['user_id']}/cards/{resolved['card_id']}"
+    _refresh_card_urls(meta, base)
     return {
         "card_type": meta["card_type"],
         "orientation": meta["orientation"],
-        "design_url": store.presign_url(f"{base}/design-face.png") if is_complete else None,
-        "writing_face_url": store.presign_url(f"{base}/writing-face.png") if is_complete else None,
+        "design_url": meta["design_url"],
+        "writing_face_url": meta["writing_face_url"],
         "created_at": meta["created_at"],
     }
 

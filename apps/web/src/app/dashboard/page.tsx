@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 
 import { auth, signOut } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
-import { ProfileCheck } from "@/components/Dashboard/ProfileCheck";
+import { CardGrid } from "@/components/Dashboard/CardGrid";
 import { SampleLibrary } from "@/components/Dashboard/SampleLibrary";
 
 export default async function DashboardPage() {
@@ -13,7 +13,7 @@ export default async function DashboardPage() {
   }
 
   return (
-    <main className="mx-auto flex max-w-2xl flex-col gap-6 p-8">
+    <main className="mx-auto flex max-w-4xl flex-col gap-8 p-8">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold">Dashboard</h1>
@@ -35,7 +35,7 @@ export default async function DashboardPage() {
           </form>
         </div>
       </div>
-      <ProfileCheck />
+      <CardGrid />
       <SampleLibrary />
     </main>
   );
