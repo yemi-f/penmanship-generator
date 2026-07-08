@@ -1,12 +1,15 @@
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
+from fastapi.responses import StreamingResponse
 from nanoid import generate as generate_nanoid
 
 from app.repo import store
 from app.repo.store import check_connection
 from app.runtime.auth import current_user
+from app.service import cards as cards_service
 from app.types.catalog import CARD_DESIGNS, DEFAULT_STYLES
+from app.types.cards import CardCreateRequest
 from app.types.sample import SampleMeta
 
 router = APIRouter()
@@ -106,3 +109,19 @@ def delete_sample(sample_id: str, user_id: str = Depends(current_user)) -> dict:
     store.remove_from_index(f"users/{user_id}/handwriting-samples/index.json", sample_id)
 
     return {"deleted": True}
+
+
+@router.post("/api/cards")
+def create_card(req: CardCreateRequest, user_id: str = Depends(current_user)) -> dict:
+    meta = cards_service.create_card(user_id, req)
+    return {"card_id": meta.card_id, "share_token": meta.share_token}
+
+
+@router.get("/api/cards/{card_id}/stream")
+def stream_card(card_id: str, user_id: str = Depends(current_user)) -> StreamingResponse:
+    if not store.object_exists(f"users/{user_id}/cards/{card_id}/meta.json"):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="card not found")
+    return StreamingResponse(
+        cards_service.stream_generation(user_id, card_id),
+        media_type="text/event-stream",
+    )

@@ -7,3 +7,4 @@ genblaze-gmicloud
 pyjwt
 nanoid
 python-multipart
+Pillow
