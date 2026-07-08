@@ -1,6 +1,5 @@
 """All genblaze_core / genblaze_gmicloud imports live here. No other module may import them."""
 
-import base64
 import logging
 from urllib.request import urlopen
 
@@ -36,11 +35,12 @@ def generate_image(prompt: str, *, model: str, size: str) -> bytes:
         raise
 
 
-def generate_image_edit(
-    prompt: str, *, model: str, size: str, reference_image: bytes, reference_content_type: str
-) -> bytes:
+def generate_image_edit(prompt: str, *, model: str, size: str, reference_image_url: str) -> bytes:
+    # Reference image is passed as a URL, never as inline base64/bytes: step.params
+    # gets hashed and persisted into manifests, and genblaze_core's own credential
+    # scanner (correctly) rejects long opaque strings there — a base64 image blob
+    # is exactly the kind of high-entropy string that scanner is designed to catch.
     logger.debug("generate_image_edit model=%s size=%s prompt=%s", model, size, prompt)
-    data_uri = f"data:{reference_content_type};base64,{base64.b64encode(reference_image).decode()}"
     provider = GMICloudImageProvider(api_key=settings.gmi_api_key)
     pipeline = Pipeline(model).step(
         provider,
@@ -48,7 +48,7 @@ def generate_image_edit(
         modality=Modality.IMAGE,
         prompt=prompt,
         size=size,
-        image=data_uri,
+        image=reference_image_url,
     )
     try:
         return _run_and_fetch(pipeline)

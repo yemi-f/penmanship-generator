@@ -40,11 +40,6 @@ def object_exists(key: str) -> bool:
     return _backend().exists(key)
 
 
-def content_type(key: str) -> str | None:
-    meta = _backend().head(key)
-    return meta.content_type if meta else None
-
-
 def delete_object(key: str) -> None:
     _backend().delete(key)
 

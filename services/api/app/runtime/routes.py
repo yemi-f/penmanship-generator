@@ -8,8 +8,8 @@ from app.repo import store
 from app.repo.store import check_connection
 from app.runtime.auth import current_user
 from app.service import cards as cards_service
-from app.types.catalog import CARD_DESIGNS, DEFAULT_STYLES
-from app.types.cards import CardCreateRequest
+from app.types.catalog import DEFAULT_STYLES
+from app.types.cards import CardCreateRequest, DesignPreviewCreateRequest
 from app.types.sample import SampleMeta
 
 router = APIRouter()
@@ -26,20 +26,6 @@ def health() -> dict[str, bool]:
 @router.get("/api/me")
 def me(user_id: str = Depends(current_user)) -> dict:
     return store.get_json(f"users/{user_id}/profile.json")
-
-
-@router.get("/api/designs")
-def designs(user_id: str = Depends(current_user)) -> dict:
-    return {
-        "designs": [
-            {
-                "slug": d["slug"],
-                "label": d["label"],
-                "url": store.public_url(f"card-designs/{d['slug']}.png"),
-            }
-            for d in CARD_DESIGNS
-        ]
-    }
 
 
 @router.get("/api/samples")
@@ -109,6 +95,12 @@ def delete_sample(sample_id: str, user_id: str = Depends(current_user)) -> dict:
     store.remove_from_index(f"users/{user_id}/handwriting-samples/index.json", sample_id)
 
     return {"deleted": True}
+
+
+@router.post("/api/design-previews")
+def create_design_preview(req: DesignPreviewCreateRequest, user_id: str = Depends(current_user)) -> dict:
+    preview_id, design_url = cards_service.create_design_preview(user_id, req)
+    return {"design_preview_id": preview_id, "design_url": design_url}
 
 
 @router.post("/api/cards")

@@ -8,8 +8,9 @@ Canonical prompts for all image generation calls. Do not modify prompts without 
 
 | Condition | Model | Reference image |
 |-----------|-------|-----------------|
-| `handwriting_style` starts with `"saved:"` | `gpt-image-2-edit` | Yes — `users/{user_id}/handwriting-samples/{sample_id}/sample.png` fetched from B2 |
-| `handwriting_style` starts with `"default:"` | `gpt-image-2-generate` | No |
+| `handwriting_style` starts with `"saved:"` (Image B) | `gpt-image-2-edit` | Yes — presigned URL to `users/{user_id}/handwriting-samples/{sample_id}/sample.png`, passed via the `image` param. Never inline base64 — see Invariants below. |
+| `handwriting_style` starts with `"default:"` (Image B) | `gpt-image-2-generate` | No |
+| Image A (design), always | `gpt-image-2-generate` | No — there is no reference-image concept for designs |
 
 ---
 
@@ -131,6 +132,8 @@ Write the following text exactly as given, word for word, with no additions or o
 - The surface fragment is always included. Never generate a writing face without specifying the surface.
 - For `gpt-image-2-edit`: always pass the reference image. Never call edit without it.
 - For `gpt-image-2-generate`: never pass a reference image. Prompt only.
+- Reference images for `gpt-image-2-edit` are passed as a presigned URL string in the `image` param — never as inline base64/bytes. `step.params` is hashed and persisted into manifests, and `genblaze_core` scans it for credential-shaped strings; a base64 image blob is long and high-entropy enough to coincidentally match one of those patterns (observed in practice: it matched the Backblaze application-key pattern).
+- `{design_description}` is injected verbatim (stripped, not quote-escaped) for Image A — it isn't wrapped in quotes like `{message}` is, so no need to escape embedded quotes.
 
 ---
 
@@ -152,60 +155,51 @@ Canvas: 800 × 300 px (landscape strip, suitable for a UI swatch).
 
 ---
 
-## Card Design Generation (one-time)
+## Design Image (Image A) Generation — per card, at request time
 
-The six card design images (`card-designs/{design_slug}.png`) are generated once and stored in B2 as 
-public assets. They are never regenerated at runtime.
+**Changed from the original spec.** Image A was originally six pre-generated stock designs
+(`card-designs/{design_slug}.png`), picked from a preset catalog and never regenerated. It is now
+generated per card from a user-supplied `design_description`, the same way Image B is generated
+from the handwriting style — see `app/service/prompts.py::build_design_prompt`. The six stock
+images are still sitting in B2, unreferenced by any code; they were not deleted, just abandoned.
 
-Use `gpt-image-2-generate` with the prompts below. Canvas: 1800 × 1200 px (postcard landscape).
-For portrait greeting card variants, regenerate at 1200 × 1800 px.
+Always `gpt-image-2-generate`, prompt-only — there is no reference-image / "saved" concept for
+designs. Canvas: 1800 × 1200 px for postcards and landscape greeting cards, 1200 × 1800 px for
+portrait greeting cards (same generate-then-resize handling as Image B, since gpt-image-2 can't
+generate those exact dimensions directly).
 
-### `minimal-white`
+Surface fragment selected by `card_type`/`orientation`, same pattern as the handwriting surface
+fragments above:
 
-```
-A clean, elegant postcard front. Pure white background. A single thin light grey rectangular border 
-inset 40px from all edges. No text, no illustrations, no patterns. Minimalist and sophisticated.
-```
-
-### `kraft-paper`
-
-```
-A postcard front with a warm kraft paper texture. Natural brown recycled paper with visible fibres 
-and subtle variation in tone. Slight vignette at the edges. No text, no illustrations. 
-The paper should look tactile and authentic.
-```
-
-### `floral-watercolour`
+### Postcard front
 
 ```
-A postcard front with a soft watercolour botanical border. Delicate flowers and leaves painted in 
-muted pinks, greens, and creams frame all four edges, leaving a large clear centre area. 
-Loose, impressionistic brushwork. No text. The centre is clean white for content.
+A postcard front, filling the entire canvas edge to edge.
 ```
 
-### `vintage-stamp`
+### Greeting card outside cover (portrait)
 
 ```
-A postcard front with a vintage postage aesthetic. Cream background with a decorative engraved-style 
-border in deep navy or burgundy. Small illustrated corner ornaments in the style of classic postage stamps. 
-A faint aged paper texture. No text. Elegant and nostalgic.
+The outside front cover of a greeting card, portrait orientation, filling the entire canvas edge to edge.
 ```
 
-### `bold-color`
+### Greeting card outside cover (landscape)
 
 ```
-A postcard front with a bold solid colour block. Deep teal background filling the entire card. 
-A clean white margin of approximately 60px on all sides creates a frame. 
-No illustrations, no patterns, no text. Striking and modern.
+The outside front cover of a greeting card, landscape orientation, filling the entire canvas edge to edge.
 ```
 
-### `linen-texture`
+Full prompt structure:
 
 ```
-A postcard front with a fine woven linen fabric texture. Off-white/ecru base with a subtle grid 
-of fine threads visible across the surface. Soft and tactile in appearance. 
-No illustrations, no border, no text. Understated and premium.
+{design_surface_fragment}
+
+{design_description}
 ```
+
+`design_description` is the user's free text, injected verbatim (stripped of leading/trailing
+whitespace) — no quote-wrapping, no "word for word" constraint (that constraint is specific to
+rendering the handwritten message exactly; the design is an open-ended illustration prompt).
 
 ---
 

@@ -31,38 +31,6 @@ STYLE_PROMPTS = {
     ),
 }
 
-DESIGN_PROMPTS = {
-    "minimal-white": (
-        "A clean, elegant postcard front. Pure white background. A single thin light grey rectangular border "
-        "inset 40px from all edges. No text, no illustrations, no patterns. Minimalist and sophisticated."
-    ),
-    "kraft-paper": (
-        "A postcard front with a warm kraft paper texture. Natural brown recycled paper with visible fibres "
-        "and subtle variation in tone. Slight vignette at the edges. No text, no illustrations. "
-        "The paper should look tactile and authentic."
-    ),
-    "floral-watercolour": (
-        "A postcard front with a soft watercolour botanical border. Delicate flowers and leaves painted in "
-        "muted pinks, greens, and creams frame all four edges, leaving a large clear centre area. "
-        "Loose, impressionistic brushwork. No text. The centre is clean white for content."
-    ),
-    "vintage-stamp": (
-        "A postcard front with a vintage postage aesthetic. Cream background with a decorative engraved-style "
-        "border in deep navy or burgundy. Small illustrated corner ornaments in the style of classic postage "
-        "stamps. A faint aged paper texture. No text. Elegant and nostalgic."
-    ),
-    "bold-color": (
-        "A postcard front with a bold solid colour block. Deep teal background filling the entire card. "
-        "A clean white margin of approximately 60px on all sides creates a frame. "
-        "No illustrations, no patterns, no text. Striking and modern."
-    ),
-    "linen-texture": (
-        "A postcard front with a fine woven linen fabric texture. Off-white/ecru base with a subtle grid "
-        "of fine threads visible across the surface. Soft and tactile in appearance. "
-        "No illustrations, no border, no text. Understated and premium."
-    ),
-}
-
 SURFACE_FRAGMENTS = {
     "postcard": (
         "A standard postcard back. Plain cream/off-white background. A thin vertical line divides the card in half. "
@@ -82,6 +50,16 @@ SURFACE_FRAGMENTS = {
         "Landscape orientation. The handwritten message begins near the top of the panel with a generous top margin "
         "and comfortable left and right margins, as if written naturally on the right page of an open card. "
         "No illustrations, no border, no decorative elements — plain writing paper only."
+    ),
+}
+
+DESIGN_SURFACE_FRAGMENTS = {
+    "postcard": "A postcard front, filling the entire canvas edge to edge.",
+    "greeting_card:portrait": (
+        "The outside front cover of a greeting card, portrait orientation, filling the entire canvas edge to edge."
+    ),
+    "greeting_card:landscape": (
+        "The outside front cover of a greeting card, landscape orientation, filling the entire canvas edge to edge."
     ),
 }
 
@@ -124,3 +102,14 @@ def build_swatch_prompt(style_slug: str) -> str:
         'Write the following text exactly as given:\n'
         '"The quick brown fox jumps over the lazy dog"'
     )
+
+
+def design_surface_fragment(card_type: str, orientation: str) -> str:
+    if card_type == "postcard":
+        return DESIGN_SURFACE_FRAGMENTS["postcard"]
+    return DESIGN_SURFACE_FRAGMENTS[f"greeting_card:{orientation}"]
+
+
+def build_design_prompt(*, card_type: str, orientation: str, description: str) -> str:
+    """Prompt for Image A (design), always gpt-image-2-generate, prompt only."""
+    return f"{design_surface_fragment(card_type, orientation)}\n\n{description.strip()}"

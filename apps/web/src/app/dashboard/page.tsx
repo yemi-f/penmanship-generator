@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { auth, signOut } from "@/lib/auth";
@@ -20,16 +21,19 @@ export default async function DashboardPage() {
             Signed in as {session.user.email}
           </p>
         </div>
-        <form
-          action={async () => {
-            "use server";
-            await signOut({ redirectTo: "/" });
-          }}
-        >
-          <Button type="submit" variant="outline">
-            Sign out
-          </Button>
-        </form>
+        <div className="flex items-center gap-2">
+          <Button nativeButton={false} render={<Link href="/create">Create a card</Link>} />
+          <form
+            action={async () => {
+              "use server";
+              await signOut({ redirectTo: "/" });
+            }}
+          >
+            <Button type="submit" variant="outline">
+              Sign out
+            </Button>
+          </form>
+        </div>
       </div>
       <ProfileCheck />
       <SampleLibrary />

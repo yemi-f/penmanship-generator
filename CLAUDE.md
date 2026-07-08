@@ -48,13 +48,19 @@ handwriting_style starts with "default:" → gpt-image-2-generate (prompt only, 
 
 Never alter the model slugs. Never pass a reference image for default styles. Never use prompt-only for saved styles.
 
-### 3. Never write on the design image
+Image A (design) always uses `gpt-image-2-generate`, prompt-only, from `design_description` — there is no "saved" concept for designs, so this routing table doesn't apply to it.
 
-The design image (Image A) is a static B2 asset. It is never modified, never passed to a generation call, never composited onto. The handwriting is generated onto a plain surface (Image B) only.
+Reference images for `gpt-image-2-edit` must be passed as a URL (presigned B2 URL) in the `image` param, never as inline base64/bytes. `step.params` is hashed and persisted into manifests; genblaze_core scans it for credential-shaped strings and a base64 image blob can coincidentally match one of those patterns (this happened in practice — a base64 blob matched the B2-application-key pattern `K005[A-Za-z0-9+/]{20,}` purely by chance).
+
+### 3. Image A and Image B are generated independently, never composited
+
+Image A (front design, from the user's free-text description) and Image B (handwriting face) are each generated directly by the model onto their own canvas. Neither is ever passed to the other's generation call, and neither is ever pasted onto the other. Two independent generations per card, never one image built from another.
+
+> Changed from the original spec: Image A was a static pre-generated B2 asset picked from a preset catalog. It is now generated per-card from a user-supplied `design_description`, the same way Image B is generated from the handwriting style. The "never composited" half of the original rule is unchanged — only the "static asset" half changed.
 
 ### 4. No Pillow compositing
 
-There is no image-on-image operation anywhere in the pipeline. Image B is generated directly by the model onto a plain background. Do not introduce Pillow compositing.
+There is no image-on-image operation anywhere in the pipeline. Image A and Image B are each generated directly by the model onto a plain/blank canvas. Pillow is used only for single-image resizing (gpt-image-2 requires generation sizes that are multiples of 16 with ≥655,360 total px, which the spec's exact canvas dimensions don't satisfy — generate at the nearest compliant size, then resize down), never to paste one image onto another.
 
 ### 5. B2 is the only data store
 
@@ -62,7 +68,7 @@ No SQLite. No Redis. No Postgres. No in-memory state that needs to persist. If s
 
 ### 6. All user assets via presigned URLs
 
-Never expose raw B2 paths for anything under `users/`. Always generate presigned URLs with 1-hour TTL at read time. Design images and default style previews are the only public B2 objects.
+Never expose raw B2 paths for anything under `users/`. Always generate presigned URLs with 1-hour TTL at read time. Default style previews are the only public B2 objects — Image A (design) is now generated per-card and lives under `users/`, so it is presigned like every other user asset, not public.
 
 ### 7. NEXTAUTH_SECRET is shared
 
@@ -86,7 +92,6 @@ Enforce on both the client (textarea `maxLength` + counter) and the server (Pyda
 
 ```
 # Shared public assets
-card-designs/{design_slug}.png
 handwriting-samples/default/{style_slug}-preview.png
 
 # Share token lookup
@@ -99,10 +104,28 @@ users/{user_id}/handwriting-samples/{sample_id}/meta.json
 users/{user_id}/handwriting-samples/{sample_id}/sample.png
 users/{user_id}/cards/index.json
 users/{user_id}/cards/{card_id}/meta.json
+users/{user_id}/cards/{card_id}/design-face.png
 users/{user_id}/cards/{card_id}/writing-face.png
+users/{user_id}/design-previews/{design_preview_id}.png
 ```
 
 Do not invent new paths. If a new persistent object is needed, confirm the path convention matches this layout.
+
+`card-designs/{design_slug}.png` (the six Phase 4 stock designs) is no longer part of the active system — Image A is now generated per-card, not picked from a preset. Those six objects are still sitting in B2, unreferenced by any code; they were not deleted, just abandoned. Ignore them.
+
+`design-previews/{design_preview_id}.png` is a flat object — no `meta.json`, no `index.json`. Nothing worth persisting about a preview, and it's never listed in any UI. See "Design Preview Pre-generation" below.
+
+---
+
+## Design Preview Pre-generation
+
+To make card creation feel faster, Image A (design) generation can start early: `POST /api/design-previews` (stateless, no card required — just `card_type`/`orientation`/`design_description`) generates Image A immediately and stores it at `users/{user_id}/design-previews/{design_preview_id}.png`, returning `{design_preview_id, design_url}`. The frontend fires this the moment the user leaves the Design step, overlapping generation with however long they spend on the Message step.
+
+`CardCreateRequest` accepts an optional `design_preview_id`. When present, `stream_generation` tries to reuse that object (a plain copy into `design-face.png`, no GMICloud call) instead of generating Image A live. **This reuse attempt must never fail card creation** — if the preview is missing, stale, or errors on read, fall through to live generation exactly as if no `design_preview_id` had been given. On successful reuse the preview object is deleted; on fallback it's simply abandoned.
+
+This feature is intentionally invisible to both the SSE Stream Contract (still only `status`/`complete`/`error`, no new event types) and the Card Status Lifecycle (still only `pending → complete/failed`) — a design preview is never itself a card and carries no status.
+
+There is no cleanup for abandoned previews (flow never reaches the Message step, or the user goes back and changes the description, orphaning the earlier one) — accepted tech debt, same category as an abandoned `pending` card.
 
 ---
 

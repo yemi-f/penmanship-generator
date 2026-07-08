@@ -10,9 +10,9 @@ from PIL import Image
 from starlette.concurrency import run_in_threadpool
 
 from app.repo import pipelines, store
-from app.service.prompts import build_edit_prompt, build_generate_prompt
-from app.types.cards import CardCreateRequest, CardMeta
-from app.types.catalog import CARD_DESIGNS, DEFAULT_STYLES
+from app.service.prompts import build_design_prompt, build_edit_prompt, build_generate_prompt
+from app.types.cards import CardCreateRequest, CardMeta, DesignPreviewCreateRequest
+from app.types.catalog import DEFAULT_STYLES
 
 logger = logging.getLogger(__name__)
 
@@ -26,11 +26,6 @@ _CANVAS = {
     "landscape": ("1808x1200", (1800, 1200)),
     "portrait": ("1200x1808", (1200, 1800)),
 }
-
-
-def _design_label(design_slug: str) -> None:
-    if not any(d["slug"] == design_slug for d in CARD_DESIGNS):
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"unknown design_slug: {design_slug}")
 
 
 def _resolve_handwriting_label(user_id: str, handwriting_style: str) -> str:
@@ -52,12 +47,10 @@ def _resolve_handwriting_label(user_id: str, handwriting_style: str) -> str:
 
 
 def create_card(user_id: str, req: CardCreateRequest) -> CardMeta:
-    _design_label(req.design_slug)
     handwriting_label = _resolve_handwriting_label(user_id, req.handwriting_style)
 
     card_id = generate_nanoid(size=12)
     share_token = generate_nanoid(size=24)
-    design_url = store.public_url(f"card-designs/{req.design_slug}.png")
 
     meta = CardMeta(
         card_id=card_id,
@@ -65,14 +58,15 @@ def create_card(user_id: str, req: CardCreateRequest) -> CardMeta:
         created_at=datetime.now(timezone.utc).isoformat(),
         card_type=req.card_type,
         orientation=req.orientation,
-        design_slug=req.design_slug,
-        design_url=design_url,
+        design_description=req.design_description,
+        design_url=None,
         handwriting_style=req.handwriting_style,
         handwriting_label=handwriting_label,
         message=req.message,
         status="pending",
         writing_face_url=None,
         share_token=share_token,
+        design_preview_id=req.design_preview_id,
     )
 
     store.put_json(f"users/{user_id}/cards/{card_id}/meta.json", meta.model_dump())
@@ -94,6 +88,69 @@ def _resize_png(raw: bytes, target_size: tuple[int, int]) -> bytes:
     return buf.getvalue()
 
 
+def _generate_design_face(card_type: str, orientation: str, description: str) -> bytes:
+    generate_size, target_size = _CANVAS[orientation]
+    prompt = build_design_prompt(card_type=card_type, orientation=orientation, description=description)
+    raw = pipelines.generate_image(prompt, model=GENERATE_MODEL, size=generate_size)
+    return _resize_png(raw, target_size)
+
+
+def create_design_preview(user_id: str, req: DesignPreviewCreateRequest) -> tuple[str, str]:
+    design_png = _generate_design_face(req.card_type, req.orientation, req.design_description)
+    preview_id = generate_nanoid(size=12)
+    preview_key = f"users/{user_id}/design-previews/{preview_id}.png"
+    store.upload_file(preview_key, design_png, content_type="image/png")
+    return preview_id, store.presign_url(preview_key)
+
+
+async def _reuse_design_preview(user_id: str, meta: dict) -> bytes | None:
+    preview_id = meta.get("design_preview_id")  # .get(), not [...] — cards predating this feature have no such key
+    if not preview_id:
+        return None
+
+    preview_key = f"users/{user_id}/design-previews/{preview_id}.png"
+    try:
+        if not await run_in_threadpool(store.object_exists, preview_key):
+            return None
+        design_png = await run_in_threadpool(store.get_object, preview_key)
+    except Exception:
+        logger.warning("design preview reuse failed, generating live preview_id=%s", preview_id, exc_info=True)
+        return None
+
+    try:
+        await run_in_threadpool(store.delete_object, preview_key)
+    except Exception:
+        logger.warning("design preview cleanup failed preview_id=%s", preview_id, exc_info=True)
+
+    return design_png
+
+
+async def _generate_writing_face(user_id: str, meta: dict, generate_size: str) -> bytes:
+    if meta["handwriting_style"].startswith("saved:"):
+        sample_id = meta["handwriting_style"].removeprefix("saved:")
+        sample_key = f"users/{user_id}/handwriting-samples/{sample_id}/sample.png"
+        reference_image_url = store.presign_url(sample_key)
+        prompt = build_edit_prompt(
+            card_type=meta["card_type"], orientation=meta["orientation"], message=meta["message"]
+        )
+        return await run_in_threadpool(
+            pipelines.generate_image_edit,
+            prompt,
+            model=EDIT_MODEL,
+            size=generate_size,
+            reference_image_url=reference_image_url,
+        )
+
+    style_slug = meta["handwriting_style"].removeprefix("default:")
+    prompt = build_generate_prompt(
+        card_type=meta["card_type"],
+        orientation=meta["orientation"],
+        style_slug=style_slug,
+        message=meta["message"],
+    )
+    return await run_in_threadpool(pipelines.generate_image, prompt, model=GENERATE_MODEL, size=generate_size)
+
+
 async def stream_generation(user_id: str, card_id: str) -> AsyncIterator[str]:
     # Existence is checked by the route before this generator starts (a 404 raised
     # mid-stream can't produce a clean HTTP status — headers are already sent).
@@ -101,47 +158,35 @@ async def stream_generation(user_id: str, card_id: str) -> AsyncIterator[str]:
     meta = store.get_json(meta_key)
 
     try:
-        yield _sse("status", {"step": "generating", "pct": 10})
-
         generate_size, target_size = _CANVAS[meta["orientation"]]
 
-        if meta["handwriting_style"].startswith("saved:"):
-            sample_id = meta["handwriting_style"].removeprefix("saved:")
-            sample_key = f"users/{user_id}/handwriting-samples/{sample_id}/sample.png"
-            reference_image = await run_in_threadpool(store.get_object, sample_key)
-            reference_content_type = await run_in_threadpool(store.content_type, sample_key) or "image/png"
-            prompt = build_edit_prompt(
-                card_type=meta["card_type"], orientation=meta["orientation"], message=meta["message"]
-            )
-            raw = await run_in_threadpool(
-                pipelines.generate_image_edit,
-                prompt,
-                model=EDIT_MODEL,
-                size=generate_size,
-                reference_image=reference_image,
-                reference_content_type=reference_content_type,
-            )
-        else:
-            style_slug = meta["handwriting_style"].removeprefix("default:")
-            prompt = build_generate_prompt(
-                card_type=meta["card_type"],
-                orientation=meta["orientation"],
-                style_slug=style_slug,
-                message=meta["message"],
-            )
-            raw = await run_in_threadpool(pipelines.generate_image, prompt, model=GENERATE_MODEL, size=generate_size)
+        yield _sse("status", {"step": "generating", "pct": 5})
 
-        yield _sse("status", {"step": "generating", "pct": 60})
+        design_png = await _reuse_design_preview(user_id, meta)
+        if design_png is None:
+            design_png = await run_in_threadpool(
+                _generate_design_face, meta["card_type"], meta["orientation"], meta["design_description"]
+            )
 
-        png = await run_in_threadpool(_resize_png, raw, target_size)
+        yield _sse("status", {"step": "generating", "pct": 35})
+
+        writing_raw = await _generate_writing_face(user_id, meta, generate_size)
+
+        yield _sse("status", {"step": "generating", "pct": 65})
+
+        writing_png = await run_in_threadpool(_resize_png, writing_raw, target_size)
 
         yield _sse("status", {"step": "storing", "pct": 80})
 
+        design_key = f"users/{user_id}/cards/{card_id}/design-face.png"
         writing_face_key = f"users/{user_id}/cards/{card_id}/writing-face.png"
-        await run_in_threadpool(store.upload_file, writing_face_key, png, content_type="image/png")
+        await run_in_threadpool(store.upload_file, design_key, design_png, content_type="image/png")
+        await run_in_threadpool(store.upload_file, writing_face_key, writing_png, content_type="image/png")
+        design_url = store.presign_url(design_key)
         writing_face_url = store.presign_url(writing_face_key)
 
         meta["status"] = "complete"
+        meta["design_url"] = design_url
         meta["writing_face_url"] = writing_face_url
         store.put_json(meta_key, meta)
 
@@ -150,7 +195,7 @@ async def stream_generation(user_id: str, card_id: str) -> AsyncIterator[str]:
             "complete",
             {
                 "writing_face_url": writing_face_url,
-                "design_url": meta["design_url"],
+                "design_url": design_url,
                 "share_url": f"/share/{meta['share_token']}",
             },
         )
