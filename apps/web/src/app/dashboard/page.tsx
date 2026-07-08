@@ -18,7 +18,7 @@ export default async function DashboardPage() {
         <div>
           <h1 className="text-2xl font-semibold">Dashboard</h1>
           <p className="text-sm text-muted-foreground">
-            Signed in as {session.user.email}
+            Signed in as {session.user.name}
           </p>
         </div>
         <div className="flex items-center gap-2">
