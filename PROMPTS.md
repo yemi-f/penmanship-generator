@@ -31,19 +31,21 @@ No illustrations, no artwork, no decorative elements other than the postcard lay
 ### Greeting card inside (portrait)
 
 ```
-The inside right panel of an open greeting card. Plain white paper texture, soft natural lighting. 
-Portrait orientation. The handwritten message begins near the top of the panel with a generous top margin 
-and comfortable left and right margins, as if written naturally on the right page of an open card. 
-No illustrations, no border, no decorative elements — plain writing paper only.
+A plain flat sheet of white writing paper, filling the canvas edge to edge, with no visible fold, 
+crease, spine, binding, or page edge — just a single continuous flat surface. Soft natural lighting. 
+Portrait orientation. The handwritten message begins near the top of the panel with a generous top 
+margin and comfortable left and right margins. No illustrations, no border, no decorative elements — 
+plain writing paper only.
 ```
 
 ### Greeting card inside (landscape)
 
 ```
-The inside right panel of an open greeting card. Plain white paper texture, soft natural lighting. 
-Landscape orientation. The handwritten message begins near the top of the panel with a generous top margin 
-and comfortable left and right margins, as if written naturally on the right page of an open card. 
-No illustrations, no border, no decorative elements — plain writing paper only.
+A plain flat sheet of white writing paper, filling the canvas edge to edge, with no visible fold, 
+crease, spine, binding, or page edge — just a single continuous flat surface. Soft natural lighting. 
+Landscape orientation. The handwritten message begins near the top of the panel with a generous top 
+margin and comfortable left and right margins. No illustrations, no border, no decorative elements — 
+plain writing paper only.
 ```
 
 ---

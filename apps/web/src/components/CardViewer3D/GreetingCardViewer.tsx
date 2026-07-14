@@ -30,6 +30,9 @@ function RightPanel({
 }) {
   const pivotRef = useRef<THREE.Group>(null);
   const [designTexture, writingTexture] = useTexture([designUrl, writingUrl]);
+  // See PostcardViewer.tsx for why colorSpace must be set explicitly.
+  designTexture.colorSpace = THREE.SRGBColorSpace;
+  writingTexture.colorSpace = THREE.SRGBColorSpace;
 
   useFrame(() => {
     if (!pivotRef.current) return;
@@ -39,16 +42,34 @@ function RightPanel({
 
   return (
     <group ref={pivotRef}>
+      {/* Camera-facing side: design when closed (front cover), writing when open (inside page). */}
       <mesh position={[panelWidth / 2, 0, 0.005]}>
         <planeGeometry args={[panelWidth, PANEL_HEIGHT]} />
-        <meshBasicMaterial map={isOpen ? writingTexture : designTexture} side={THREE.DoubleSide} />
+        <meshBasicMaterial map={isOpen ? writingTexture : designTexture} toneMapped={false} />
+      </mesh>
+      {/* Reverse side: always blank — this leaf's other face (inside-left when closed,
+          outside-back when open) never carries the design image; the design lives on
+          LeftPanel's reverse instead (see below). */}
+      <mesh rotation={[0, Math.PI, 0]} position={[panelWidth / 2, 0, -0.01]}>
+        <planeGeometry args={[panelWidth, PANEL_HEIGHT]} />
+        <meshStandardMaterial color="white" />
       </mesh>
     </group>
   );
 }
 
-function LeftPanel({ panelWidth, isOpen }: { panelWidth: number; isOpen: boolean }) {
+function LeftPanel({
+  panelWidth,
+  designUrl,
+  isOpen,
+}: {
+  panelWidth: number;
+  designUrl: string;
+  isOpen: boolean;
+}) {
   const pivotRef = useRef<THREE.Group>(null);
+  const designTexture = useTexture(designUrl);
+  designTexture.colorSpace = THREE.SRGBColorSpace;
 
   useFrame(() => {
     if (!pivotRef.current) return;
@@ -58,9 +79,17 @@ function LeftPanel({ panelWidth, isOpen }: { panelWidth: number; isOpen: boolean
 
   return (
     <group ref={pivotRef}>
+      {/* Camera-facing side when open: blank inside-left page. */}
       <mesh position={[-panelWidth / 2, 0, 0.005]}>
         <planeGeometry args={[panelWidth, PANEL_HEIGHT]} />
-        <meshStandardMaterial color="white" side={THREE.DoubleSide} />
+        <meshStandardMaterial color="white" />
+      </mesh>
+      {/* Reverse side: the design/front-cover image — this leaf's outward face, revealed
+          by orbiting around the open card from the blank (left) side, i.e. the side that
+          doesn't have the writing. */}
+      <mesh rotation={[0, Math.PI, 0]} position={[-panelWidth / 2, 0, -0.003]}>
+        <planeGeometry args={[panelWidth, PANEL_HEIGHT]} />
+        <meshBasicMaterial map={designTexture} toneMapped={false} />
       </mesh>
     </group>
   );
@@ -83,7 +112,7 @@ function Scene({
       <directionalLight position={[2, 2, 3]} intensity={0.6} />
       <Suspense fallback={null}>
         <RightPanel panelWidth={panelWidth} designUrl={designUrl} writingUrl={writingUrl} isOpen={isOpen} />
-        <LeftPanel panelWidth={panelWidth} isOpen={isOpen} />
+        <LeftPanel panelWidth={panelWidth} designUrl={designUrl} isOpen={isOpen} />
       </Suspense>
       <OrbitControls enablePan={false} minDistance={2.5} maxDistance={8} />
     </>

@@ -19,6 +19,11 @@ function CardMesh({
 }) {
   const groupRef = useRef<THREE.Group>(null);
   const [frontTexture, backTexture] = useTexture([frontUrl, backUrl]);
+  // useTexture doesn't set colorSpace itself; without this, sRGB-encoded PNG data gets
+  // treated as linear and re-encoded on output, crushing contrast (most visible on the
+  // low-contrast handwriting texture, which reads as washed-out pale gray instead of ink).
+  frontTexture.colorSpace = THREE.SRGBColorSpace;
+  backTexture.colorSpace = THREE.SRGBColorSpace;
 
   useFrame(() => {
     if (!groupRef.current) return;
@@ -30,11 +35,11 @@ function CardMesh({
     <group ref={groupRef}>
       <mesh position={[0, 0, 0.005]}>
         <planeGeometry args={[WIDTH, HEIGHT]} />
-        <meshBasicMaterial map={frontTexture} />
+        <meshBasicMaterial map={frontTexture} toneMapped={false} />
       </mesh>
       <mesh rotation={[0, Math.PI, 0]} position={[0, 0, -0.005]}>
         <planeGeometry args={[WIDTH, HEIGHT]} />
-        <meshBasicMaterial map={backTexture} />
+        <meshBasicMaterial map={backTexture} toneMapped={false} />
       </mesh>
     </group>
   );
