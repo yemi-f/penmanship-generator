@@ -1,11 +1,9 @@
 "use client";
 
-import { Suspense, useRef, useState } from "react";
+import { Suspense, useRef } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { OrbitControls, useTexture } from "@react-three/drei";
 import * as THREE from "three";
-
-import { Button } from "@/components/ui/button";
 
 const PANEL_HEIGHT = 2;
 
@@ -96,31 +94,22 @@ type Props = {
   orientation: "landscape" | "portrait";
   designTextureUrl: string;
   writingTextureUrl: string;
+  isOpen: boolean;
 };
 
 /**
  * Open-book greeting card. Closed: single panel, outside front = design
  * image. Open: ~150° dihedral, right panel = writing face, left = blank.
+ * Open/close state is controlled by the caller.
  */
-export function GreetingCardViewer({ orientation, designTextureUrl, writingTextureUrl }: Props) {
-  const [isOpen, setIsOpen] = useState(false);
+export function GreetingCardViewer({ orientation, designTextureUrl, writingTextureUrl, isOpen }: Props) {
   const panelWidth = orientation === "portrait" ? PANEL_HEIGHT * (1200 / 1800) : PANEL_HEIGHT * (1800 / 1200);
 
   return (
-    <div className="flex flex-col gap-2">
-      <div className="aspect-[3/2] w-full touch-none overflow-hidden rounded-md border bg-muted">
-        <Canvas camera={{ position: [0, 0, 4], fov: 50 }}>
-          <Scene
-            panelWidth={panelWidth}
-            designUrl={designTextureUrl}
-            writingUrl={writingTextureUrl}
-            isOpen={isOpen}
-          />
-        </Canvas>
-      </div>
-      <Button type="button" variant="outline" onClick={() => setIsOpen((o) => !o)}>
-        {isOpen ? "Close" : "Open"}
-      </Button>
+    <div className="relative left-1/2 right-1/2 -mx-[50vw] h-[85vh] w-screen touch-none overflow-hidden bg-muted">
+      <Canvas camera={{ position: [0, 0, 4], fov: 50 }}>
+        <Scene panelWidth={panelWidth} designUrl={designTextureUrl} writingUrl={writingTextureUrl} isOpen={isOpen} />
+      </Canvas>
     </div>
   );
 }

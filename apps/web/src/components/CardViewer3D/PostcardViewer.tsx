@@ -1,11 +1,9 @@
 "use client";
 
-import { Suspense, useRef, useState } from "react";
+import { Suspense, useRef } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { OrbitControls, useTexture } from "@react-three/drei";
 import * as THREE from "three";
-
-import { Button } from "@/components/ui/button";
 
 const WIDTH = 3;
 const HEIGHT = 2; // postcards are always landscape, 3:2
@@ -43,20 +41,12 @@ function CardMesh({
 }
 
 function Scene({ frontUrl, backUrl, flipped }: { frontUrl: string; backUrl: string; flipped: boolean }) {
-  const [autoRotate, setAutoRotate] = useState(true);
   return (
     <>
       <Suspense fallback={null}>
         <CardMesh frontUrl={frontUrl} backUrl={backUrl} flipped={flipped} />
       </Suspense>
-      <OrbitControls
-        autoRotate={autoRotate}
-        autoRotateSpeed={1.2}
-        onStart={() => setAutoRotate(false)}
-        enablePan={false}
-        minDistance={2.5}
-        maxDistance={8}
-      />
+      <OrbitControls enablePan={false} minDistance={2.5} maxDistance={8} />
     </>
   );
 }
@@ -64,26 +54,21 @@ function Scene({ frontUrl, backUrl, flipped }: { frontUrl: string; backUrl: stri
 type Props = {
   frontTextureUrl: string;
   backTextureUrl: string;
+  flipped: boolean;
 };
 
 /**
  * Flat rectangular mesh, 3:2 landscape, two faces (front = design, back =
- * writing face). Flip via button (drag-past-90° isn't implemented — it would
- * compete with OrbitControls' own drag-to-orbit gesture on the same canvas).
+ * writing face). Flip is controlled by the caller (drag-past-90° isn't
+ * implemented — it would compete with OrbitControls' own drag-to-orbit
+ * gesture on the same canvas).
  */
-export function PostcardViewer({ frontTextureUrl, backTextureUrl }: Props) {
-  const [flipped, setFlipped] = useState(false);
-
+export function PostcardViewer({ frontTextureUrl, backTextureUrl, flipped }: Props) {
   return (
-    <div className="flex flex-col gap-2">
-      <div className="aspect-[3/2] w-full touch-none overflow-hidden rounded-md border bg-muted">
-        <Canvas camera={{ position: [0, 0, 4], fov: 50 }}>
-          <Scene frontUrl={frontTextureUrl} backUrl={backTextureUrl} flipped={flipped} />
-        </Canvas>
-      </div>
-      <Button type="button" variant="outline" onClick={() => setFlipped((f) => !f)}>
-        Flip
-      </Button>
+    <div className="relative left-1/2 right-1/2 -mx-[50vw] h-[85vh] w-screen touch-none overflow-hidden bg-muted">
+      <Canvas camera={{ position: [0, 0, 4], fov: 50 }}>
+        <Scene frontUrl={frontTextureUrl} backUrl={backTextureUrl} flipped={flipped} />
+      </Canvas>
     </div>
   );
 }

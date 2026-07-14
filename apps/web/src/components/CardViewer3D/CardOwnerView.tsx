@@ -27,6 +27,7 @@ export function CardOwnerView({ cardId }: Props) {
   const router = useRouter();
   const [card, setCard] = useState<CardMeta | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [toggled, setToggled] = useState(false);
 
   const refresh = useCallback(async () => {
     try {
@@ -53,20 +54,72 @@ export function CardOwnerView({ cardId }: Props) {
   }
 
   if (error) {
-    return <p className="p-8 text-sm text-destructive">{error}</p>;
+    return <p className="min-h-screen bg-muted p-8 text-sm text-destructive">{error}</p>;
   }
   if (!card) {
-    return <p className="p-8 text-sm text-muted-foreground">Loading…</p>;
+    return <p className="min-h-screen bg-muted p-8 text-sm text-muted-foreground">Loading…</p>;
   }
 
   const shareLink = typeof window !== "undefined" ? `${window.location.origin}/share/${card.share_token}` : "";
+  const ready = Boolean(isComplete && designTextureUrl && writingTextureUrl);
 
   return (
-    <main className="mx-auto flex max-w-2xl flex-col gap-6 p-8">
-      <h1 className="text-2xl font-semibold">Your card</h1>
+    <main className="flex min-h-screen w-full flex-col gap-6 bg-muted p-8">
+      <div className="sticky top-0 z-10 -mx-8 flex flex-wrap items-center justify-between gap-4 bg-muted px-6 py-2">
+        <div className="flex flex-wrap items-center gap-3">
+          <h1 className="text-2xl font-semibold">Your card</h1>
+          {ready && (
+            <Button size="sm" type="button" variant="outline" onClick={() => setToggled((t) => !t)}>
+              {card.card_type === "postcard" ? "Flip" : toggled ? "Close" : "Open"}
+            </Button>
+          )}
+        </div>
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          {card.writing_face_url && (
+            <Button
+              size="sm"
+              nativeButton={false}
+              render={
+                <a href={card.writing_face_url} download="writing-face.png">
+                  Download handwriting
+                </a>
+              }
+            />
+          )}
+          {card.design_url && (
+            <Button
+              size="sm"
+              nativeButton={false}
+              render={
+                <a href={card.design_url} download="design.png">
+                  Download design
+                </a>
+              }
+            />
+          )}
+          <Button size="sm" type="button" variant="outline" onClick={() => navigator.clipboard.writeText(shareLink)}>
+            Copy share link
+          </Button>
+          <AlertDialog>
+            <AlertDialogTrigger render={<Button size="sm" type="button" variant="destructive">Delete</Button>} />
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Delete this card?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This permanently removes the card and its images. This cannot be undone.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={handleDelete}>Delete</AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
+      </div>
 
       {!isComplete && (
-        <p className="text-sm text-muted-foreground">
+        <p className="mx-auto w-full max-w-2xl text-sm text-muted-foreground">
           {card.status === "pending" ? "Still generating…" : "Generation failed."}
         </p>
       )}
@@ -74,57 +127,17 @@ export function CardOwnerView({ cardId }: Props) {
       {isComplete && designTextureUrl && writingTextureUrl && (
         <>
           {card.card_type === "postcard" ? (
-            <PostcardViewer frontTextureUrl={designTextureUrl} backTextureUrl={writingTextureUrl} />
+            <PostcardViewer frontTextureUrl={designTextureUrl} backTextureUrl={writingTextureUrl} flipped={toggled} />
           ) : (
             <GreetingCardViewer
               orientation={card.orientation}
               designTextureUrl={designTextureUrl}
               writingTextureUrl={writingTextureUrl}
+              isOpen={toggled}
             />
           )}
         </>
       )}
-
-      <div className="flex flex-wrap gap-2">
-        {card.writing_face_url && (
-          <Button
-            nativeButton={false}
-            render={
-              <a href={card.writing_face_url} download="writing-face.png">
-                Download handwriting
-              </a>
-            }
-          />
-        )}
-        {card.design_url && (
-          <Button
-            nativeButton={false}
-            render={
-              <a href={card.design_url} download="design.png">
-                Download design
-              </a>
-            }
-          />
-        )}
-        <Button type="button" variant="outline" onClick={() => navigator.clipboard.writeText(shareLink)}>
-          Copy share link
-        </Button>
-        <AlertDialog>
-          <AlertDialogTrigger render={<Button type="button" variant="destructive">Delete</Button>} />
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Delete this card?</AlertDialogTitle>
-              <AlertDialogDescription>
-                This permanently removes the card and its images. This cannot be undone.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction onClick={handleDelete}>Delete</AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      </div>
     </main>
   );
 }
