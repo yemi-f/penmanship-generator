@@ -96,69 +96,57 @@ export function CardOwnerView({ cardId }: Props) {
         )
       )}
 
-      <div className="fixed bottom-6 left-1/2 z-20 flex -translate-x-1/2 items-center gap-1 rounded-full border border-border bg-background/80 p-1.5 shadow-lg backdrop-blur">
+      <div className="fixed bottom-6 left-1/2 z-20 flex max-w-[calc(100vw-2rem)] -translate-x-1/2 flex-wrap items-center justify-center gap-1.5 rounded-2xl border border-border bg-background/80 p-1.5 shadow-lg backdrop-blur">
         {ready && (
-          <Button
-            size="icon"
-            type="button"
-            variant="ghost"
-            className="rounded-full"
-            title={toggleLabel}
-            aria-label={toggleLabel}
-            onClick={() => setToggled((t) => !t)}
-          >
-            <ToggleIcon />
+          <Button size="sm" type="button" variant="ghost" className="rounded-full" onClick={() => setToggled((t) => !t)}>
+            <ToggleIcon data-icon="inline-start" />
+            {toggleLabel}
           </Button>
         )}
         {card.writing_face_url && (
           <Button
-            size="icon"
+            size="sm"
             variant="ghost"
             className="rounded-full"
             nativeButton={false}
             render={
-              <a href={card.writing_face_url} download="writing-face.png" title="Download handwriting" aria-label="Download handwriting">
-                <PenLine />
+              <a href={card.writing_face_url} download="writing-face.png">
+                <PenLine data-icon="inline-start" />
+                Download handwriting
               </a>
             }
           />
         )}
         {card.design_url && (
           <Button
-            size="icon"
+            size="sm"
             variant="ghost"
             className="rounded-full"
             nativeButton={false}
             render={
-              <a href={card.design_url} download="design.png" title="Download design" aria-label="Download design">
-                <ImageIcon />
+              <a href={card.design_url} download="design.png">
+                <ImageIcon data-icon="inline-start" />
+                Download design
               </a>
             }
           />
         )}
         <Button
-          size="icon"
+          size="sm"
           type="button"
           variant="ghost"
           className="rounded-full"
-          title="Copy share link"
-          aria-label="Copy share link"
           onClick={() => navigator.clipboard.writeText(shareLink)}
         >
-          <Link2 />
+          <Link2 data-icon="inline-start" />
+          Copy share link
         </Button>
         <AlertDialog>
           <AlertDialogTrigger
             render={
-              <Button
-                size="icon"
-                type="button"
-                variant="destructive"
-                className="rounded-full"
-                title="Delete"
-                aria-label="Delete"
-              >
-                <Trash2 />
+              <Button size="sm" type="button" variant="destructive" className="rounded-full">
+                <Trash2 data-icon="inline-start" />
+                Delete
               </Button>
             }
           />

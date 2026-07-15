@@ -44,54 +44,50 @@ export function CardRecipientView({ shareToken, data }: Props) {
         </p>
       )}
 
-      <div className="fixed bottom-6 left-1/2 z-20 flex -translate-x-1/2 items-center gap-1 rounded-full border border-border bg-background/80 p-1.5 shadow-lg backdrop-blur">
+      <div className="fixed bottom-6 left-1/2 z-20 flex max-w-[calc(100vw-2rem)] -translate-x-1/2 flex-wrap items-center justify-center gap-1.5 rounded-2xl border border-border bg-background/80 p-1.5 shadow-lg backdrop-blur">
         {ready && (
-          <Button
-            size="icon"
-            type="button"
-            variant="ghost"
-            className="rounded-full"
-            title={toggleLabel}
-            aria-label={toggleLabel}
-            onClick={() => setToggled((t) => !t)}
-          >
-            <ToggleIcon />
+          <Button size="sm" type="button" variant="ghost" className="rounded-full" onClick={() => setToggled((t) => !t)}>
+            <ToggleIcon data-icon="inline-start" />
+            {toggleLabel}
           </Button>
         )}
         {data.writing_face_url && (
           <Button
-            size="icon"
+            size="sm"
             variant="ghost"
             className="rounded-full"
             nativeButton={false}
             render={
-              <a href={data.writing_face_url} download="writing-face.png" title="Download handwriting" aria-label="Download handwriting">
-                <PenLine />
+              <a href={data.writing_face_url} download="writing-face.png">
+                <PenLine data-icon="inline-start" />
+                Download handwriting
               </a>
             }
           />
         )}
         {data.design_url && (
           <Button
-            size="icon"
+            size="sm"
             variant="ghost"
             className="rounded-full"
             nativeButton={false}
             render={
-              <a href={data.design_url} download="design.png" title="Download design" aria-label="Download design">
-                <ImageIcon />
+              <a href={data.design_url} download="design.png">
+                <ImageIcon data-icon="inline-start" />
+                Download design
               </a>
             }
           />
         )}
         <Button
-          size="icon"
+          size="sm"
           variant="ghost"
           className="rounded-full"
           nativeButton={false}
           render={
-            <Link href="/" title="Make your own" aria-label="Make your own">
-              <Sparkles />
+            <Link href="/">
+              <Sparkles data-icon="inline-start" />
+              Make your own
             </Link>
           }
         />
