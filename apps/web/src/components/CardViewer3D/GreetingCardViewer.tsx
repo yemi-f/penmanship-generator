@@ -9,8 +9,13 @@ import { useHingeSpring } from "./useHingeSpring";
 
 const PANEL_HEIGHT = 2;
 const PANEL_THICKNESS = 0.015;
-const RIGHT_STATIC_Z = PANEL_THICKNESS / 2;
-const LEFT_STATIC_Z = -PANEL_THICKNESS / 2;
+// RightPanel always shows the writing texture — never swapped. LeftPanel is the one that
+// carries the design texture on its reverse face, which its own 180° closed-rotation
+// naturally brings around to face the camera (see LeftPanel below). For that reveal to be
+// visible rather than hidden, LeftPanel must be the panel *closer* to the camera when the
+// two coincide (closed), hence LEFT > RIGHT here.
+const RIGHT_STATIC_Z = -PANEL_THICKNESS / 2;
+const LEFT_STATIC_Z = PANEL_THICKNESS / 2;
 
 // Both panels pivot around the shared spine at x=0.
 // Closed: right panel faces the camera flat (0°), left panel folds a full
@@ -76,20 +81,17 @@ function useParallaxTilt(
 
 function RightPanel({
   panelWidth,
-  designUrl,
   writingUrl,
   isOpen,
   liftRef,
 }: {
   panelWidth: number;
-  designUrl: string;
   writingUrl: string;
   isOpen: boolean;
   liftRef: RefObject<number>;
 }) {
   const pivotRef = useRef<THREE.Group>(null);
-  const [designTexture, writingTexture] = useTexture([designUrl, writingUrl]);
-  designTexture.colorSpace = THREE.SRGBColorSpace;
+  const writingTexture = useTexture(writingUrl);
   writingTexture.colorSpace = THREE.SRGBColorSpace;
 
   useHingeSpring(pivotRef, isOpen ? OPEN_RIGHT : CLOSED_RIGHT);
@@ -105,10 +107,11 @@ function RightPanel({
         <meshBasicMaterial attach="material-1" color="white" toneMapped={false} />
         <meshBasicMaterial attach="material-2" color="white" toneMapped={false} />
         <meshBasicMaterial attach="material-3" color="white" toneMapped={false} />
-        {/* +Z, camera-facing at rest: design when closed (front cover), writing when open (inside page). */}
-        <meshBasicMaterial attach="material-4" map={isOpen ? writingTexture : designTexture} toneMapped={false} />
-        {/* -Z: always blank — this leaf's other face (inside-left when closed, outside-back when
-            open) never carries the design image; the design lives on LeftPanel's -Z face instead. */}
+        {/* +Z: always the inside-right writing page — never swapped. When closed, this sits
+            behind LeftPanel (see RIGHT_STATIC_Z/LEFT_STATIC_Z) and is fully hidden by
+            LeftPanel's own reverse face, which rotates into view instead. */}
+        <meshBasicMaterial attach="material-4" map={writingTexture} toneMapped={false} />
+        {/* -Z: always blank. */}
         <meshBasicMaterial attach="material-5" color="white" toneMapped={false} />
       </mesh>
     </group>
@@ -173,13 +176,7 @@ function Scene({
     <>
       <group ref={parallaxRef}>
         <Suspense fallback={null}>
-          <RightPanel
-            panelWidth={panelWidth}
-            designUrl={designUrl}
-            writingUrl={writingUrl}
-            isOpen={isOpen}
-            liftRef={liftRef}
-          />
+          <RightPanel panelWidth={panelWidth} writingUrl={writingUrl} isOpen={isOpen} liftRef={liftRef} />
           <LeftPanel panelWidth={panelWidth} designUrl={designUrl} isOpen={isOpen} liftRef={liftRef} />
         </Suspense>
       </group>
