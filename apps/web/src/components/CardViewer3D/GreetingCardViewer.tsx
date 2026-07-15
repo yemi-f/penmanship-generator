@@ -218,7 +218,7 @@ export function GreetingCardViewer({ orientation, designTextureUrl, writingTextu
 
   return (
     <div
-      className="relative left-1/2 right-1/2 -mx-[50vw] h-[85vh] w-screen touch-none overflow-hidden bg-muted transition-colors duration-500"
+      className="fixed inset-0 h-dvh w-dvw touch-none overflow-hidden bg-muted transition-colors duration-500"
       style={isOpen && dominantColor ? { backgroundColor: dominantColor } : undefined}
     >
       <Canvas camera={{ position: [0, 0, 4], fov: 50 }}>

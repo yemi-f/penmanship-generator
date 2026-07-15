@@ -70,7 +70,7 @@ type Props = {
  */
 export function PostcardViewer({ frontTextureUrl, backTextureUrl, flipped }: Props) {
   return (
-    <div className="relative left-1/2 right-1/2 -mx-[50vw] h-[85vh] w-screen touch-none overflow-hidden bg-muted">
+    <div className="fixed inset-0 h-dvh w-dvw touch-none overflow-hidden bg-muted">
       <Canvas camera={{ position: [0, 0, 4], fov: 50 }}>
         <Scene frontUrl={frontTextureUrl} backUrl={backTextureUrl} flipped={flipped} />
       </Canvas>
