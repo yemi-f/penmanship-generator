@@ -5,6 +5,7 @@ import { Canvas, useFrame, type RootState } from "@react-three/fiber";
 import { OrbitControls, useTexture } from "@react-three/drei";
 import * as THREE from "three";
 
+import { useDominantColor } from "./useDominantColor";
 import { useHingeSpring } from "./useHingeSpring";
 
 const PANEL_HEIGHT = 2;
@@ -213,9 +214,13 @@ type Props = {
  */
 export function GreetingCardViewer({ orientation, designTextureUrl, writingTextureUrl, isOpen }: Props) {
   const panelWidth = orientation === "portrait" ? PANEL_HEIGHT * (1200 / 1800) : PANEL_HEIGHT * (1800 / 1200);
+  const dominantColor = useDominantColor(designTextureUrl);
 
   return (
-    <div className="relative left-1/2 right-1/2 -mx-[50vw] h-[85vh] w-screen touch-none overflow-hidden bg-muted">
+    <div
+      className="relative left-1/2 right-1/2 -mx-[50vw] h-[85vh] w-screen touch-none overflow-hidden bg-muted transition-colors duration-500"
+      style={isOpen && dominantColor ? { backgroundColor: dominantColor } : undefined}
+    >
       <Canvas camera={{ position: [0, 0, 4], fov: 50 }}>
         <Scene panelWidth={panelWidth} designUrl={designTextureUrl} writingUrl={writingTextureUrl} isOpen={isOpen} />
       </Canvas>
