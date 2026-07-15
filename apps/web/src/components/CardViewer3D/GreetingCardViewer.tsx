@@ -133,7 +133,11 @@ function LeftPanel({
   const designTexture = useTexture(designUrl);
   designTexture.colorSpace = THREE.SRGBColorSpace;
 
-  useHingeSpring(pivotRef, isOpen ? OPEN_LEFT : CLOSED_LEFT);
+  // LeftPanel swings through ~150° (vs. RightPanel's ~30°) — the default spring's ~7.7%
+  // overshoot is subtle in absolute degrees on a small swing but reads as a visible
+  // slide-past-and-back on this much larger arc, since the mesh sits offset from its pivot.
+  // Higher damping (ζ≈1.05, just past critical) keeps it snappy with no overshoot.
+  useHingeSpring(pivotRef, isOpen ? OPEN_LEFT : CLOSED_LEFT, { damping: 20 });
   useFrame(() => {
     if (pivotRef.current) pivotRef.current.position.z = LEFT_STATIC_Z + liftRef.current;
   });
