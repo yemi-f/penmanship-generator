@@ -65,9 +65,9 @@ Write the following text exactly as given, word for word, with no additions or o
 "{message}"
 ```
 
-### Postcard-only additions: sign-off and addressing
+### Sign-off and addressing additions
 
-Postcards accept two additional, **required** fields not used by greeting cards: `recipient_name` and `sign_off`. When present, the prompt structure becomes:
+Two optional fields extend the base prompt above: `sign_off` (both card types — required for postcards, optional for greeting cards) and `recipient_name` (postcard only, required). When present, the prompt structure becomes:
 
 ```
 {surface_fragment}
@@ -86,7 +86,7 @@ street address, then city and state/province and ZIP/postal code — and write i
 across the three address lines. Do not use any real person's actual address.
 ```
 
-For greeting cards, `recipient_name` and `sign_off` are always absent, so both additions are no-ops and the prompt is byte-for-byte the base structure above.
+The `{sign_off}` paragraph appears whenever `sign_off` is provided, for either card type. The `{recipient_name}`/addressing paragraph only ever appears for postcards — greeting cards have no address-lines area, and the frontend never collects a recipient name for them. When a field is absent, its paragraph is omitted entirely and the rest of the prompt is unaffected.
 
 ### `casual`
 
@@ -164,7 +164,7 @@ Same postcard-only sign-off and addressing additions described above apply here 
 - `{recipient_name}` (postcard only) is injected verbatim (quote-escaped, same as `{message}`), but only inside the separate addressing paragraph: `address the postcard to "{recipient_name}"`. It is never part of the `{message}` "word for word" quoted block.
 - `{sign_off}` (postcard only) is injected verbatim, joined into the same quoted `"..."` block as `{message}` (separated by a blank line) — both are covered by the one "word for word" instruction. A guidance sentence noting the sign-off should be written in the same style/ink is appended *outside* the quotes — it's an instruction to the model, not literal text to render.
 - The postcard address itself is the one deliberate exception to "always verbatim": it is never supplied by the user and never computed server-side — the prompt instructs the model to invent a realistic-looking fictional US/Canada address, so that part of the prompt is intentionally *not* a "word for word" quoted block.
-- `recipient_name` and `sign_off` are only ever non-null for `card_type == "postcard"` (enforced by a required-field validator at request time); for greeting cards both are always `None`, so the sign-off/addressing prompt additions are no-ops and greeting-card prompts are unaffected.
+- `recipient_name` is only ever non-null for `card_type == "postcard"` (the frontend never collects it for greeting cards), so the addressing prompt addition is a no-op for greeting cards. `sign_off` is required (non-null, enforced by a request-time validator) for postcards but optional for both card types otherwise — greeting cards may or may not have one, and the sign-off prompt addition applies to either card type whenever it's present.
 
 ---
 

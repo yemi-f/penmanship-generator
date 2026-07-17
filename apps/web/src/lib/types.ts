@@ -23,7 +23,7 @@ export type CardCreateRequest = {
   message: string;
   design_preview_id: string | null;
   recipient_name: string | null; // postcard only, required
-  sign_off: string | null; // postcard only, required
+  sign_off: string | null; // required for postcard, optional for greeting_card
 };
 
 export type CardCreateResponse = { card_id: string; share_token: string };

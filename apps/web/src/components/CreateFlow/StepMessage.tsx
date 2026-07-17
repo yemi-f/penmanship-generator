@@ -51,17 +51,17 @@ export function StepMessage({
             onChange={(e) => onRecipientNameChange(e.target.value)}
             placeholder="Recipient's name"
           />
-
-          <Label htmlFor="card-sign-off">Sign off</Label>
-          <Textarea
-            id="card-sign-off"
-            value={signOff}
-            onChange={(e) => onSignOffChange(e.target.value)}
-            rows={2}
-            placeholder={"Cheers,\nMary"}
-          />
         </>
       )}
+
+      <Label htmlFor="card-sign-off">Sign off</Label>
+      <Textarea
+        id="card-sign-off"
+        value={signOff}
+        onChange={(e) => onSignOffChange(e.target.value)}
+        rows={2}
+        placeholder={"Cheers,\nMary"}
+      />
     </div>
   );
 }

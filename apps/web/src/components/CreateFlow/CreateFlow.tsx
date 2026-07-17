@@ -51,7 +51,7 @@ export function CreateFlow() {
     message,
     design_preview_id: null,
     recipient_name: cardType === "postcard" ? recipientName : null,
-    sign_off: cardType === "postcard" ? signOff : null,
+    sign_off: signOff || null,
   };
 
   function handleNext() {
