@@ -22,6 +22,8 @@ export type CardCreateRequest = {
   handwriting_style: string; // "default:{slug}" | "saved:{sample_id}"
   message: string;
   design_preview_id: string | null;
+  recipient_name: string | null; // postcard only, required
+  sign_off: string | null; // postcard only, required
 };
 
 export type CardCreateResponse = { card_id: string; share_token: string };
@@ -49,6 +51,8 @@ export type CardMeta = {
   writing_face_url: string | null;
   share_token: string;
   design_preview_id: string | null;
+  recipient_name: string | null;
+  sign_off: string | null;
 };
 
 export type ShareData = {

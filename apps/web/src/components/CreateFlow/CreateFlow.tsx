@@ -30,6 +30,8 @@ export function CreateFlow() {
   const [designDescription, setDesignDescription] = useState("");
   const [handwritingStyle, setHandwritingStyle] = useState("");
   const [message, setMessage] = useState("");
+  const [recipientName, setRecipientName] = useState("");
+  const [signOff, setSignOff] = useState("");
   const [designPreviewStatus, setDesignPreviewStatus] = useState<"idle" | "pending" | "ready" | "error">("idle");
   const designPreviewPromiseRef = useRef<Promise<string | null>>(Promise.resolve(null));
 
@@ -37,7 +39,9 @@ export function CreateFlow() {
     (step === 1 && true) ||
     (step === 2 && handwritingStyle !== "") ||
     (step === 3 && designDescription.trim().length > 0) ||
-    (step === 4 && message.trim().length > 0);
+    (step === 4 &&
+      message.trim().length > 0 &&
+      (cardType !== "postcard" || (recipientName.trim().length > 0 && signOff.trim().length > 0)));
 
   const request: CardCreateRequest = {
     card_type: cardType,
@@ -46,6 +50,8 @@ export function CreateFlow() {
     handwriting_style: handwritingStyle,
     message,
     design_preview_id: null,
+    recipient_name: cardType === "postcard" ? recipientName : null,
+    sign_off: cardType === "postcard" ? signOff : null,
   };
 
   function handleNext() {
@@ -89,7 +95,15 @@ export function CreateFlow() {
       {step === 3 && <StepDesign designDescription={designDescription} onChange={setDesignDescription} />}
       {step === 4 && (
         <>
-          <StepMessage message={message} onChange={setMessage} />
+          <StepMessage
+            cardType={cardType}
+            message={message}
+            onChange={setMessage}
+            recipientName={recipientName}
+            onRecipientNameChange={setRecipientName}
+            signOff={signOff}
+            onSignOffChange={setSignOff}
+          />
           {designPreviewStatus === "pending" && (
             <p className="text-xs text-muted-foreground">Preparing your design…</p>
           )}

@@ -67,6 +67,8 @@ def create_card(user_id: str, req: CardCreateRequest) -> CardMeta:
         writing_face_url=None,
         share_token=share_token,
         design_preview_id=req.design_preview_id,
+        recipient_name=req.recipient_name,
+        sign_off=req.sign_off,
     )
 
     store.put_json(f"users/{user_id}/cards/{card_id}/meta.json", meta.model_dump())
@@ -126,12 +128,20 @@ async def _reuse_design_preview(user_id: str, meta: dict) -> bytes | None:
 
 
 async def _generate_writing_face(user_id: str, meta: dict, generate_size: str) -> bytes:
+    # .get(), not [...] — cards predating this feature have no such keys
+    recipient_name = meta.get("recipient_name")
+    sign_off = meta.get("sign_off")
+
     if meta["handwriting_style"].startswith("saved:"):
         sample_id = meta["handwriting_style"].removeprefix("saved:")
         sample_key = f"users/{user_id}/handwriting-samples/{sample_id}/sample.png"
         reference_image_url = store.presign_url(sample_key)
         prompt = build_edit_prompt(
-            card_type=meta["card_type"], orientation=meta["orientation"], message=meta["message"]
+            card_type=meta["card_type"],
+            orientation=meta["orientation"],
+            message=meta["message"],
+            recipient_name=recipient_name,
+            sign_off=sign_off,
         )
         return await run_in_threadpool(
             pipelines.generate_image_edit,
@@ -147,6 +157,8 @@ async def _generate_writing_face(user_id: str, meta: dict, generate_size: str) -
         orientation=meta["orientation"],
         style_slug=style_slug,
         message=meta["message"],
+        recipient_name=recipient_name,
+        sign_off=sign_off,
     )
     return await run_in_threadpool(pipelines.generate_image, prompt, model=GENERATE_MODEL, size=generate_size)
 

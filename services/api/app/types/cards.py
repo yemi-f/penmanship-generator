@@ -23,6 +23,14 @@ class CardCreateRequest(_SurfaceFields):
     handwriting_style: str
     message: str = Field(max_length=500, min_length=1)
     design_preview_id: str | None = None
+    recipient_name: str | None = Field(default=None, max_length=100)
+    sign_off: str | None = Field(default=None, max_length=300)
+
+    @model_validator(mode="after")
+    def _postcard_requires_recipient_and_sign_off(self) -> "CardCreateRequest":
+        if self.card_type == "postcard" and (not self.recipient_name or not self.sign_off):
+            raise ValueError("postcard requires recipient_name and sign_off")
+        return self
 
 
 class CardMeta(BaseModel):
@@ -40,3 +48,5 @@ class CardMeta(BaseModel):
     writing_face_url: str | None
     share_token: str
     design_preview_id: str | None = None
+    recipient_name: str | None = None
+    sign_off: str | None = None

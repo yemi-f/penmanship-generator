@@ -65,6 +65,29 @@ Write the following text exactly as given, word for word, with no additions or o
 "{message}"
 ```
 
+### Postcard-only additions: sign-off and addressing
+
+Postcards accept two additional, **required** fields not used by greeting cards: `recipient_name` and `sign_off`. When present, the prompt structure becomes:
+
+```
+{surface_fragment}
+
+Handwriting style: {style_prompt}
+
+Write the following text exactly as given, word for word, with no additions or omissions:
+"{message}
+
+{sign_off}" The sign-off/closing line above should be written in the same handwriting style and
+ink as the rest of the message, not visually distinguished as a separate signature block.
+
+In the address-lines area on the right half, address the postcard to "{recipient_name}". Invent a
+realistic-looking but entirely fictional US or Canadian mailing address for this recipient — a
+street address, then city and state/province and ZIP/postal code — and write it beneath the name
+across the three address lines. Do not use any real person's actual address.
+```
+
+For greeting cards, `recipient_name` and `sign_off` are always absent, so both additions are no-ops and the prompt is byte-for-byte the base structure above.
+
 ### `casual`
 
 ```
@@ -125,6 +148,8 @@ Write the following text exactly as given, word for word, with no additions or o
 "{message}"
 ```
 
+Same postcard-only sign-off and addressing additions described above apply here too — `build_edit_prompt` takes the identical `recipient_name`/`sign_off` parameters as `build_generate_prompt`.
+
 ---
 
 ## Invariants (enforced in pipelines.py)
@@ -136,6 +161,10 @@ Write the following text exactly as given, word for word, with no additions or o
 - For `gpt-image-2-generate`: never pass a reference image. Prompt only.
 - Reference images for `gpt-image-2-edit` are passed as a presigned URL string in the `image` param — never as inline base64/bytes. `step.params` is hashed and persisted into manifests, and `genblaze_core` scans it for credential-shaped strings; a base64 image blob is long and high-entropy enough to coincidentally match one of those patterns (observed in practice: it matched the Backblaze application-key pattern).
 - `{design_description}` is injected verbatim (stripped, not quote-escaped) for Image A — it isn't wrapped in quotes like `{message}` is, so no need to escape embedded quotes.
+- `{recipient_name}` (postcard only) is injected verbatim (quote-escaped, same as `{message}`), but only inside the separate addressing paragraph: `address the postcard to "{recipient_name}"`. It is never part of the `{message}` "word for word" quoted block.
+- `{sign_off}` (postcard only) is injected verbatim, joined into the same quoted `"..."` block as `{message}` (separated by a blank line) — both are covered by the one "word for word" instruction. A guidance sentence noting the sign-off should be written in the same style/ink is appended *outside* the quotes — it's an instruction to the model, not literal text to render.
+- The postcard address itself is the one deliberate exception to "always verbatim": it is never supplied by the user and never computed server-side — the prompt instructs the model to invent a realistic-looking fictional US/Canada address, so that part of the prompt is intentionally *not* a "word for word" quoted block.
+- `recipient_name` and `sign_off` are only ever non-null for `card_type == "postcard"` (enforced by a required-field validator at request time); for greeting cards both are always `None`, so the sign-off/addressing prompt additions are no-ops and greeting-card prompts are unaffected.
 
 ---
 
