@@ -18,5 +18,7 @@ class Settings(BaseSettings):
 
     nextauth_secret: str = ""
 
+    frontend_origin: str = ""
+
 
 settings = Settings()
