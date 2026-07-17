@@ -1,4 +1,4 @@
-# CLAUDE.md — InkCard
+# CLAUDE.md — Penmanship
 
 This file is read by the coding agent at the start of every session. Follow everything here without exception.
 
@@ -6,7 +6,7 @@ This file is read by the coding agent at the start of every session. Follow ever
 
 ## What This Project Is
 
-InkCard generates personalized greeting cards and postcards with text rendered in a real human's handwriting style. Users sign in with Google, manage a library of handwriting samples, create cards, preview them in a 3D viewer, and share via a private link.
+Penmanship generates personalized greeting cards and postcards with text rendered in a real human's handwriting style. Users sign in with Google, manage a library of handwriting samples, create cards, preview them in a 3D viewer, and share via a private link.
 
 Full specification: `IMPLEMENTATION.md`. Read it before writing any code.
 

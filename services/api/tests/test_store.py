@@ -26,8 +26,8 @@ def prefix():
 
 def test_upload_and_get_object_roundtrip(prefix):
     key = f"{prefix}/file.bin"
-    store.upload_file(key, b"hello inkcard", content_type="application/octet-stream")
-    assert store.get_object(key) == b"hello inkcard"
+    store.upload_file(key, b"hello penmanship", content_type="application/octet-stream")
+    assert store.get_object(key) == b"hello penmanship"
 
 
 def test_delete_object_removes_it(prefix):

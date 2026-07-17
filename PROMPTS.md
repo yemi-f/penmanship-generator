@@ -1,4 +1,4 @@
-# PROMPTS.md — InkCard
+# PROMPTS.md — Penmanship
 
 Canonical prompts for all image generation calls. Do not modify prompts without updating this file. Prompts are consumed by `pipelines.py`.
 

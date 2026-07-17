@@ -1,5 +1,5 @@
 {
-  "name": "inkcard",
+  "name": "penmanship",
   "private": true,
   "scripts": {
     "dev": "concurrently -n web,api -c blue,green \"pnpm --filter web dev\" \"pnpm --filter api dev\"",

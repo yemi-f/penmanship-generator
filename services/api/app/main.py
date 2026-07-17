@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.config.settings import settings
 from app.runtime.routes import router
 
-app = FastAPI(title="InkCard API")
+app = FastAPI(title="Penmanship API")
 
 app.add_middleware(
     CORSMiddleware,

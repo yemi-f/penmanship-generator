@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Enforces the InkCard layer invariant (see CLAUDE.md):
+"""Enforces the Penmanship layer invariant (see CLAUDE.md):
 
   genblaze_s3                → services/api/app/repo/store.py ONLY
   genblaze_core/genblaze_*   → services/api/app/repo/pipelines.py ONLY

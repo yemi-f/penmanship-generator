@@ -6,7 +6,7 @@
 
 ## 0. What We Are Building
 
-**InkCard** — a web app where signed-in users generate personalized greeting cards and postcards with text rendered in a real human's handwriting. Users manage a library of saved handwriting samples, create cards using any saved sample, preview results in a 3D viewer, and share cards via a private link. Cards and handwriting samples are private to the user who created them; the share link gives the recipient read-only access to one card.
+**Penmanship** — a web app where signed-in users generate personalized greeting cards and postcards with text rendered in a real human's handwriting. Users manage a library of saved handwriting samples, create cards using any saved sample, preview results in a 3D viewer, and share cards via a private link. Cards and handwriting samples are private to the user who created them; the share link gives the recipient read-only access to one card.
 
 The pipeline follows the pattern established in [`backblaze-labs/genblaze-gmicloud-pipeline`](https://github.com/backblaze-labs/genblaze-gmicloud-pipeline):
 
@@ -490,7 +490,7 @@ GOOGLE_CLIENT_SECRET=
 ## 16. Project Layout
 
 ```
-inkcard/
+penmanship/
 ├── apps/web/
 │   └── src/
 │       ├── app/

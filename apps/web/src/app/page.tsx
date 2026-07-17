@@ -11,7 +11,7 @@ export default async function LandingPage() {
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center gap-6 px-4 text-center">
-      <h1 className="text-4xl font-semibold tracking-tight">InkCard</h1>
+      <h1 className="text-4xl font-semibold tracking-tight">Penmanship</h1>
       <p className="max-w-md text-muted-foreground">
         Personalized greeting cards and postcards, written in a real
         person&apos;s handwriting.
