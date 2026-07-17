@@ -2,8 +2,10 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import { Check, Copy } from "lucide-react";
 
 import { apiFetch } from "@/lib/api";
+import { useCopyToClipboard } from "@/lib/useCopyToClipboard";
 import type { CardMeta } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import {
@@ -26,6 +28,7 @@ export function CardGrid() {
   const [offset, setOffset] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { copiedId, copy } = useCopyToClipboard();
 
   const refresh = useCallback(async (newOffset: number) => {
     setLoading(true);
@@ -53,8 +56,8 @@ export function CardGrid() {
     if (res.ok) refresh(offset);
   }
 
-  function handleCopyLink(shareToken: string) {
-    navigator.clipboard.writeText(`${window.location.origin}/share/${shareToken}`);
+  function handleCopyLink(cardId: string, shareToken: string) {
+    copy(cardId, `${window.location.origin}/share/${shareToken}`);
   }
 
   const hasPrev = offset > 0;
@@ -87,8 +90,18 @@ export function CardGrid() {
                 {new Date(card.created_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' })}
               </p>
               <div className="flex gap-1">
-                <Button type="button" size="sm" variant="outline" onClick={() => handleCopyLink(card.share_token)}>
-                  Copy link
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() => handleCopyLink(card.card_id, card.share_token)}
+                >
+                  {copiedId === card.card_id ? (
+                    <Check data-icon="inline-start" />
+                  ) : (
+                    <Copy data-icon="inline-start" />
+                  )}
+                  {copiedId === card.card_id ? "Copied!" : "Copy link"}
                 </Button>
                 <AlertDialog>
                   <AlertDialogTrigger

@@ -2,10 +2,11 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Book, BookOpen, FlipHorizontal2, Image as ImageIcon, Link2, PenLine, Trash2 } from "lucide-react";
+import { Book, BookOpen, Check, Copy, FlipHorizontal2, Image as ImageIcon, PenLine, Trash2 } from "lucide-react";
 
 import { apiFetch } from "@/lib/api";
 import { useBlobTextureUrl } from "@/lib/useBlobTextureUrl";
+import { useCopyToClipboard } from "@/lib/useCopyToClipboard";
 import type { CardMeta } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import {
@@ -29,6 +30,7 @@ export function CardOwnerView({ cardId }: Props) {
   const [card, setCard] = useState<CardMeta | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [toggled, setToggled] = useState(false);
+  const { copiedId, copy } = useCopyToClipboard();
 
   const refresh = useCallback(async () => {
     try {
@@ -136,10 +138,10 @@ export function CardOwnerView({ cardId }: Props) {
           type="button"
           variant="ghost"
           className="rounded-full"
-          onClick={() => navigator.clipboard.writeText(shareLink)}
+          onClick={() => copy(cardId, shareLink)}
         >
-          <Link2 data-icon="inline-start" />
-          Copy share link
+          {copiedId === cardId ? <Check data-icon="inline-start" /> : <Copy data-icon="inline-start" />}
+          {copiedId === cardId ? "Copied!" : "Copy share link"}
         </Button>
         <AlertDialog>
           <AlertDialogTrigger

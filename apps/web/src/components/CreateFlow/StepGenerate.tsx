@@ -1,12 +1,16 @@
 "use client";
 
 import { useEffect, useRef, useState, type RefObject } from "react";
+import { Check, Copy } from "lucide-react";
 
 import { apiFetch } from "@/lib/api";
 import { parseSSE } from "@/lib/sse";
+import { useCopyToClipboard } from "@/lib/useCopyToClipboard";
 import type { CardCreateRequest, CardCreateResponse, GenerationCompleteData } from "@/lib/types";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
+
+const SHARE_LINK_COPY_ID = "share-link";
 
 type Phase = "generating" | "storing" | "complete" | "error";
 
@@ -27,6 +31,7 @@ export function StepGenerate({ request, designPreviewPromiseRef, onBack }: Props
   const [result, setResult] = useState<GenerationCompleteData | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const startedRef = useRef(false);
+  const { copiedId, copy } = useCopyToClipboard();
 
   useEffect(() => {
     if (startedRef.current) return;
@@ -101,8 +106,13 @@ export function StepGenerate({ request, designPreviewPromiseRef, onBack }: Props
         </div>
         <div className="flex items-center gap-2">
           <input readOnly value={shareLink} className="flex-1 rounded-md border px-3 py-2 text-sm" />
-          <Button type="button" onClick={() => navigator.clipboard.writeText(shareLink)}>
-            Copy link
+          <Button type="button" onClick={() => copy(SHARE_LINK_COPY_ID, shareLink)}>
+            {copiedId === SHARE_LINK_COPY_ID ? (
+              <Check data-icon="inline-start" />
+            ) : (
+              <Copy data-icon="inline-start" />
+            )}
+            {copiedId === SHARE_LINK_COPY_ID ? "Copied!" : "Copy link"}
           </Button>
         </div>
       </div>
