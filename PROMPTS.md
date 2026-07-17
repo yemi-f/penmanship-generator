@@ -78,7 +78,9 @@ Write the following text exactly as given, word for word, with no additions or o
 "{message}
 
 {sign_off}" The sign-off/closing line above should be written in the same handwriting style and
-ink as the rest of the message, not visually distinguished as a separate signature block.
+ink as the rest of the message, not visually distinguished as a separate signature block.[
+Greeting cards only: Position the sign-off toward the right side of the panel, the way a
+signature naturally trails at the end of a handwritten letter.]
 
 In the address-lines area on the right half, address the postcard to "{recipient_name}". Invent a
 realistic-looking but entirely fictional US or Canadian mailing address for this recipient — a
@@ -86,7 +88,7 @@ street address, then city and state/province and ZIP/postal code — and write i
 across the three address lines. Do not use any real person's actual address.
 ```
 
-The `{sign_off}` paragraph appears whenever `sign_off` is provided, for either card type. The `{recipient_name}`/addressing paragraph only ever appears for postcards — greeting cards have no address-lines area, and the frontend never collects a recipient name for them. When a field is absent, its paragraph is omitted entirely and the rest of the prompt is unaffected.
+The `{sign_off}` paragraph appears whenever `sign_off` is provided, for either card type. The right-alignment sentence (bracketed above) is appended only when `card_type == "greeting_card"` — postcards keep the plain style-only guidance, since the postcard's message column is the narrower left half of a landscape card and a right-aligned closing there would likely look cramped. The `{recipient_name}`/addressing paragraph only ever appears for postcards — greeting cards have no address-lines area, and the frontend never collects a recipient name for them. When a field is absent, its paragraph is omitted entirely and the rest of the prompt is unaffected.
 
 ### `casual`
 
@@ -165,6 +167,7 @@ Same postcard-only sign-off and addressing additions described above apply here 
 - `{sign_off}` (postcard only) is injected verbatim, joined into the same quoted `"..."` block as `{message}` (separated by a blank line) — both are covered by the one "word for word" instruction. A guidance sentence noting the sign-off should be written in the same style/ink is appended *outside* the quotes — it's an instruction to the model, not literal text to render.
 - The postcard address itself is the one deliberate exception to "always verbatim": it is never supplied by the user and never computed server-side — the prompt instructs the model to invent a realistic-looking fictional US/Canada address, so that part of the prompt is intentionally *not* a "word for word" quoted block.
 - `recipient_name` is only ever non-null for `card_type == "postcard"` (the frontend never collects it for greeting cards), so the addressing prompt addition is a no-op for greeting cards. `sign_off` is required (non-null, enforced by a request-time validator) for postcards but optional for both card types otherwise — greeting cards may or may not have one, and the sign-off prompt addition applies to either card type whenever it's present.
+- The right-alignment sentence within the sign-off guidance is `card_type`-conditional (`_sign_off_guidance(card_type, sign_off)` in `prompts.py`), not a separate field — greeting cards get it, postcards don't.
 
 ---
 

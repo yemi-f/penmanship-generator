@@ -76,13 +76,19 @@ def _full_message(message: str, sign_off: str | None) -> str:
     return f"{message.strip()}\n\n{sign_off.strip()}"
 
 
-def _sign_off_guidance(sign_off: str | None) -> str:
+def _sign_off_guidance(card_type: str, sign_off: str | None) -> str:
     if not sign_off or not sign_off.strip():
         return ""
-    return (
+    guidance = (
         " The sign-off/closing line above should be written in the same handwriting style and ink as the "
         "rest of the message, not visually distinguished as a separate signature block."
     )
+    if card_type == "greeting_card":
+        guidance += (
+            " Position the sign-off toward the right side of the panel, the way a signature naturally "
+            "trails at the end of a handwritten letter."
+        )
+    return guidance
 
 
 def _addressing_fragment(recipient_name: str | None) -> str:
@@ -117,7 +123,7 @@ def build_generate_prompt(
         f"Handwriting style: {STYLE_PROMPTS[style_slug]}\n\n"
         "Write the following text exactly as given, word for word, with no additions or omissions:\n"
         f'"{_escape(_full_message(message, sign_off))}"'
-        f"{_sign_off_guidance(sign_off)}"
+        f"{_sign_off_guidance(card_type, sign_off)}"
         f"{_addressing_fragment(recipient_name)}"
     )
 
@@ -138,7 +144,7 @@ def build_edit_prompt(
         "reference handwriting. Do not blend in any other handwriting style.\n\n"
         "Write the following text exactly as given, word for word, with no additions or omissions:\n"
         f'"{_escape(_full_message(message, sign_off))}"'
-        f"{_sign_off_guidance(sign_off)}"
+        f"{_sign_off_guidance(card_type, sign_off)}"
         f"{_addressing_fragment(recipient_name)}"
     )
 
