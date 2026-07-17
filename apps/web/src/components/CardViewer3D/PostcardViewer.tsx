@@ -5,6 +5,8 @@ import { Canvas, useFrame } from "@react-three/fiber";
 import { OrbitControls, useTexture } from "@react-three/drei";
 import * as THREE from "three";
 
+import { useParallaxTilt } from "./useParallaxTilt";
+
 const WIDTH = 3;
 const HEIGHT = 2; // postcards are always landscape, 3:2
 
@@ -46,12 +48,28 @@ function CardMesh({
 }
 
 function Scene({ frontUrl, backUrl, flipped }: { frontUrl: string; backUrl: string; flipped: boolean }) {
+  const parallaxRef = useRef<THREE.Group>(null);
+  const isDraggingRef = useRef(false);
+  useParallaxTilt(parallaxRef, true, isDraggingRef);
+
   return (
     <>
-      <Suspense fallback={null}>
-        <CardMesh frontUrl={frontUrl} backUrl={backUrl} flipped={flipped} />
-      </Suspense>
-      <OrbitControls enablePan={false} minDistance={2.5} maxDistance={8} />
+      <group ref={parallaxRef}>
+        <Suspense fallback={null}>
+          <CardMesh frontUrl={frontUrl} backUrl={backUrl} flipped={flipped} />
+        </Suspense>
+      </group>
+      <OrbitControls
+        enablePan={false}
+        minDistance={2.5}
+        maxDistance={8}
+        onStart={() => {
+          isDraggingRef.current = true;
+        }}
+        onEnd={() => {
+          isDraggingRef.current = false;
+        }}
+      />
     </>
   );
 }

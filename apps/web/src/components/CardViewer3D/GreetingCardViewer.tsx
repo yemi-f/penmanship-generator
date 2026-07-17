@@ -1,12 +1,13 @@
 "use client";
 
 import { Suspense, useEffect, useRef, type RefObject } from "react";
-import { Canvas, useFrame, type RootState } from "@react-three/fiber";
+import { Canvas, useFrame } from "@react-three/fiber";
 import { OrbitControls, useTexture } from "@react-three/drei";
 import * as THREE from "three";
 
 import { useDominantColor } from "./useDominantColor";
 import { useHingeSpring } from "./useHingeSpring";
+import { useParallaxTilt } from "./useParallaxTilt";
 
 const PANEL_HEIGHT = 2;
 const PANEL_THICKNESS = 0.015;
@@ -33,10 +34,6 @@ const LIFT_PEAK = 0.06;
 const LIFT_STIFFNESS = 260;
 const LIFT_DAMPING = 30; // ζ≈0.93, near-critical — pops and resolves before the hinge spring settles
 
-const PARALLAX_MAX_Y = THREE.MathUtils.degToRad(6);
-const PARALLAX_MAX_X = THREE.MathUtils.degToRad(4);
-const PARALLAX_LAMBDA = 5;
-
 /** One-shot position kick on every isOpen flip, eased back to 0 by a stiff spring — the
  * "breaking contact" beat that precedes the (slower, overshooting) hinge swing. */
 function useLiftPulse(isOpen: boolean) {
@@ -60,24 +57,6 @@ function useLiftPulse(isOpen: boolean) {
   });
 
   return value;
-}
-
-/** Subtle tilt toward the cursor while closed and not orbit-dragging; eases back to flat otherwise. */
-function useParallaxTilt(
-  ref: RefObject<THREE.Group | null>,
-  isOpen: boolean,
-  isDraggingRef: RefObject<boolean>,
-) {
-  useFrame((state: RootState, rawDelta) => {
-    const group = ref.current;
-    if (!group) return;
-    const dt = Math.min(rawDelta, 1 / 30);
-    const active = !isOpen && !isDraggingRef.current;
-    const targetY = active ? state.pointer.x * PARALLAX_MAX_Y : 0;
-    const targetX = active ? -state.pointer.y * PARALLAX_MAX_X : 0;
-    group.rotation.y = THREE.MathUtils.damp(group.rotation.y, targetY, PARALLAX_LAMBDA, dt);
-    group.rotation.x = THREE.MathUtils.damp(group.rotation.x, targetX, PARALLAX_LAMBDA, dt);
-  });
 }
 
 function RightPanel({
@@ -175,7 +154,7 @@ function Scene({
   const parallaxRef = useRef<THREE.Group>(null);
   const isDraggingRef = useRef(false);
   const liftRef = useLiftPulse(isOpen);
-  useParallaxTilt(parallaxRef, isOpen, isDraggingRef);
+  useParallaxTilt(parallaxRef, !isOpen, isDraggingRef);
 
   return (
     <>
