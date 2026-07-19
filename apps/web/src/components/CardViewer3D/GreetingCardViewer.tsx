@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect, useRef, type RefObject } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
-import { OrbitControls, useTexture } from "@react-three/drei";
+import { OrbitControls, Text, useTexture } from "@react-three/drei";
 import * as THREE from "three";
 
 import { useDominantColor } from "./useDominantColor";
@@ -33,6 +33,9 @@ const OPEN_LEFT = Math.PI / 6;
 const LIFT_PEAK = 0.06;
 const LIFT_STIFFNESS = 260;
 const LIFT_DAMPING = 30; // ζ≈0.93, near-critical — pops and resolves before the hinge spring settles
+
+const IMPRINT_TEXT = "MADE JUST FOR YOU AT PENMANSHIP.ME";
+const IMPRINT_Y = -PANEL_HEIGHT * 0.31; // bottom third of the panel, matching a real card's back imprint
 
 /** One-shot position kick on every isOpen flip, eased back to 0 by a stiff spring — the
  * "breaking contact" beat that precedes the (slower, overshooting) hinge swing. */
@@ -94,6 +97,22 @@ function RightPanel({
         {/* -Z: always blank. */}
         <meshBasicMaterial attach="material-5" color="white" toneMapped={false} />
       </mesh>
+      {/* Outside-back imprint, printed on the same -Z face as the blank material above.
+          rotation.y=π turns the text to face -Z (outward, away from the writing side) while
+          keeping it unmirrored for a viewer who has orbited around to look at the card's back. */}
+      <Text
+        position={[panelWidth / 2, IMPRINT_Y, -PANEL_THICKNESS / 2 - 0.003]}
+        rotation={[0, Math.PI, 0]}
+        fontSize={0.035}
+        letterSpacing={0.05}
+        color="#2b2b2b"
+        anchorX="center"
+        anchorY="middle"
+        textAlign="center"
+        maxWidth={panelWidth * 0.85}
+      >
+        {IMPRINT_TEXT}
+      </Text>
     </group>
   );
 }
