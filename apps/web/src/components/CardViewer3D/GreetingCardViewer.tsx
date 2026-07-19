@@ -109,7 +109,7 @@ function RightPanel({
         anchorX="center"
         anchorY="middle"
         textAlign="center"
-        maxWidth={panelWidth * 0.85}
+        maxWidth={panelWidth * 0.5}
       >
         {IMPRINT_TEXT}
       </Text>
