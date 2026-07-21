@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { Book, BookOpen, FlipHorizontal2, Image as ImageIcon, PenLine, Sparkles } from "lucide-react";
 
+import { downloadBlob } from "@/lib/downloadFile";
 import type { ShareData } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { PostcardViewer } from "@/components/CardViewer3D/PostcardViewer";
@@ -54,30 +55,26 @@ export function CardRecipientView({ shareToken, data }: Props) {
         {data.writing_face_url && (
           <Button
             size="sm"
+            type="button"
             variant="ghost"
             className="rounded-full"
-            nativeButton={false}
-            render={
-              <a href={data.writing_face_url} download="writing-face.png">
-                <PenLine data-icon="inline-start" />
-                Download handwriting
-              </a>
-            }
-          />
+            onClick={() => downloadBlob(() => fetch(writingTextureUrl), "writing-face.png")}
+          >
+            <PenLine data-icon="inline-start" />
+            Download handwriting
+          </Button>
         )}
         {data.design_url && (
           <Button
             size="sm"
+            type="button"
             variant="ghost"
             className="rounded-full"
-            nativeButton={false}
-            render={
-              <a href={data.design_url} download="design.png">
-                <ImageIcon data-icon="inline-start" />
-                Download design
-              </a>
-            }
-          />
+            onClick={() => downloadBlob(() => fetch(designTextureUrl), "design.png")}
+          >
+            <ImageIcon data-icon="inline-start" />
+            Download design
+          </Button>
         )}
         <Button
           size="sm"

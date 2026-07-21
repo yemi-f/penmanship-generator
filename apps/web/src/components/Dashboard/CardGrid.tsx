@@ -101,7 +101,7 @@ export function CardGrid() {
                   ) : (
                     <Copy data-icon="inline-start" />
                   )}
-                  {copiedId === card.card_id ? "Copied!" : "Copy link"}
+                  {copiedId === card.card_id ? "Copied!" : "Copy share link"}
                 </Button>
                 <AlertDialog>
                   <AlertDialogTrigger

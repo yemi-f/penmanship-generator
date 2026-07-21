@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Book, BookOpen, Check, Copy, FlipHorizontal2, Image as ImageIcon, PenLine, Trash2 } from "lucide-react";
 
 import { apiFetch } from "@/lib/api";
+import { downloadBlob } from "@/lib/downloadFile";
 import { useBlobTextureUrl } from "@/lib/useBlobTextureUrl";
 import { useCopyToClipboard } from "@/lib/useCopyToClipboard";
 import type { CardMeta } from "@/lib/types";
@@ -108,30 +109,28 @@ export function CardOwnerView({ cardId }: Props) {
         {card.writing_face_url && (
           <Button
             size="sm"
+            type="button"
             variant="ghost"
             className="rounded-full"
-            nativeButton={false}
-            render={
-              <a href={card.writing_face_url} download="writing-face.png">
-                <PenLine data-icon="inline-start" />
-                Download handwriting
-              </a>
+            onClick={() =>
+              downloadBlob(() => apiFetch(`/api/cards/${cardId}/textures/writing`), "writing-face.png")
             }
-          />
+          >
+            <PenLine data-icon="inline-start" />
+            Download handwriting
+          </Button>
         )}
         {card.design_url && (
           <Button
             size="sm"
+            type="button"
             variant="ghost"
             className="rounded-full"
-            nativeButton={false}
-            render={
-              <a href={card.design_url} download="design.png">
-                <ImageIcon data-icon="inline-start" />
-                Download design
-              </a>
-            }
-          />
+            onClick={() => downloadBlob(() => apiFetch(`/api/cards/${cardId}/textures/design`), "design.png")}
+          >
+            <ImageIcon data-icon="inline-start" />
+            Download design
+          </Button>
         )}
         <Button
           size="sm"
