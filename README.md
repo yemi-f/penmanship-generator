@@ -1,0 +1,82 @@
+# Penmanship
+
+Personalized greeting cards and postcards, written in a real person's handwriting.
+
+Sign in with Google, save handwriting samples (or pick a default style), write a message, and Penmanship generates a card with your message rendered in that handwriting — previewed in an interactive 3D viewer and shareable via a private link.
+
+**Demo:** _coming soon at [penmanship.me](https://penmanship.me)_
+
+## Hackathon
+
+_Built for [hackathon name] — TODO: add a short blurb about the event and what inspired this project._
+
+## Tech stack
+
+- **Frontend:** Next.js 16, React 19, Tailwind, shadcn/ui, `@react-three/fiber` + `@react-three/drei` for the 3D card viewer
+- **Auth:** NextAuth.js v5, Google provider, JWT sessions (no session database)
+- **Backend:** FastAPI, Pydantic v2, Genblaze Core
+- **Image generation:** GMICloud via `genblaze-gmicloud`
+- **Storage:** Backblaze B2 via `genblaze-s3` — the only persistent store, no database of any kind
+- **Streaming:** Server-Sent Events for live generation progress
+
+See `CLAUDE.md` for the full architecture rules and non-negotiable constraints this project follows, and `IMPLEMENTATION.md` for the original build spec.
+
+## Local setup
+
+```bash
+git clone https://github.com/yemi-f/penmanship-generator.git
+cd penmanship-generator
+pnpm install
+```
+
+Copy the two env file templates and fill in real credentials:
+
+```bash
+cp .env.example apps/web/.env
+cp services/api/.env.example services/api/.env
+```
+
+You'll need:
+- A [Backblaze B2](https://www.backblaze.com/cloud-storage) bucket + application key
+- A [GMICloud](https://gmicloud.ai) API key
+- A [Google OAuth client](https://console.cloud.google.com/apis/credentials) (set the authorized redirect URI to `http://localhost:3000/api/auth/callback/google` for local dev)
+- A generated `NEXTAUTH_SECRET` (e.g. `openssl rand -hex 32`)
+
+**`NEXTAUTH_SECRET` must be identical in both `apps/web/.env` and `services/api/.env`** — the backend uses it to verify JWTs issued by the frontend.
+
+Then start both services together:
+
+```bash
+pnpm dev
+```
+
+This runs the Next.js dev server (`:3000`) and the FastAPI backend (`:8000`) concurrently. Visit `http://localhost:3000`.
+
+### Environment variables
+
+| Variable | Where | Notes |
+|---|---|---|
+| `B2_ENDPOINT`, `B2_REGION`, `B2_KEY_ID`, `B2_APPLICATION_KEY`, `B2_BUCKET_NAME` | both `.env` files | Backblaze B2 credentials |
+| `GMI_API_KEY` | both `.env` files | GMICloud image generation |
+| `NEXTAUTH_SECRET` | both `.env` files | must match exactly on both sides |
+| `NEXTAUTH_URL` | `apps/web/.env` | e.g. `http://localhost:3000`, or the deployed frontend URL |
+| `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | `apps/web/.env` | Google OAuth credentials |
+| `NEXT_PUBLIC_API_URL` | `apps/web/.env` | FastAPI base URL the frontend calls |
+| `FRONTEND_ORIGIN` | `services/api/.env` | comma-separated list of allowed CORS origins |
+
+### Useful commands
+
+```bash
+pnpm dev              # run both services
+pnpm check:structure  # enforce the genblaze/boto3/S3StorageBackend layer invariant (see CLAUDE.md)
+```
+
+## Deployment (Railway)
+
+Both services deploy from this one repo as two separate Railway services:
+
+1. Create a Railway project from this GitHub repo. Add **two services**: one with root directory `apps/web`, one with root directory `services/api`.
+2. Deploy the backend first (Railway auto-detects Python + the committed `services/api/Procfile`, no extra config needed). Copy its public URL.
+3. Set the frontend's env vars (same list as above), with `NEXTAUTH_URL` and `NEXT_PUBLIC_API_URL` pointing at the frontend's own Railway URL and the backend's Railway URL respectively, then deploy. `NEXT_PUBLIC_*` vars are baked in at build time — redeploy (not just restart) if you change one afterward.
+4. Set the backend's `FRONTEND_ORIGIN` to the frontend's Railway URL and redeploy the backend.
+5. In Google Cloud Console, add `https://<frontend-url>/api/auth/callback/google` to the OAuth client's Authorized redirect URIs, and the bare frontend URL to Authorized JavaScript origins.
