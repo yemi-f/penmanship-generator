@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type RefObject } from "react";
-import { Check, Copy } from "lucide-react";
+import { Check, Copy, Loader2 } from "lucide-react";
 
 import { apiFetch } from "@/lib/api";
 import { parseSSE } from "@/lib/sse";
@@ -14,10 +14,17 @@ const SHARE_LINK_COPY_ID = "share-link";
 
 type Phase = "generating" | "storing" | "complete" | "error";
 
-const STEP_LABELS: Record<string, string> = {
-  generating: "Rendering handwriting…",
-  storing: "Saving…",
-};
+// The backend only reports a single "generating" step for both the design and handwriting
+// AI calls (see services/api/app/service/cards.py). 35 is that step's pct checkpoint right
+// after design generation finishes and right before handwriting generation starts — keep
+// this in sync with that file if its checkpoints ever change.
+const HANDWRITING_STARTS_AT_PCT = 35;
+
+function getStepLabel(phase: Phase, pct: number): string {
+  if (phase === "generating") return pct < HANDWRITING_STARTS_AT_PCT ? "Designing your card…" : "Rendering handwriting…";
+  if (phase === "storing") return "Saving…";
+  return "Working…";
+}
 
 type Props = {
   request: CardCreateRequest;
@@ -122,7 +129,10 @@ export function StepGenerate({ request, designPreviewPromiseRef, onBack }: Props
   return (
     <div className="flex flex-col gap-4">
       <h2 className="text-lg font-semibold">Generating your card</h2>
-      <p className="text-sm text-muted-foreground">{STEP_LABELS[phase] ?? "Working…"}</p>
+      <p className="flex items-center gap-2 text-sm text-muted-foreground">
+        <Loader2 className="size-4 animate-spin" />
+        {getStepLabel(phase, pct)}
+      </p>
       <Progress value={pct} />
     </div>
   );
