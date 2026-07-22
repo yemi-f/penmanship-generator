@@ -30,13 +30,19 @@ export function CardRecipientView({ shareToken, data }: Props) {
     <main className="relative h-dvh w-dvw overflow-hidden bg-muted">
       {ready ? (
         data.card_type === "postcard" ? (
-          <PostcardViewer frontTextureUrl={designTextureUrl} backTextureUrl={writingTextureUrl} flipped={toggled} />
+          <PostcardViewer
+            frontTextureUrl={designTextureUrl}
+            backTextureUrl={writingTextureUrl}
+            flipped={toggled}
+            onToggle={() => setToggled((t) => !t)}
+          />
         ) : (
           <GreetingCardViewer
             orientation={data.orientation}
             designTextureUrl={designTextureUrl}
             writingTextureUrl={writingTextureUrl}
             isOpen={toggled}
+            onToggle={() => setToggled((t) => !t)}
           />
         )
       ) : (

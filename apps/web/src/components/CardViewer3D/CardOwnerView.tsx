@@ -88,13 +88,19 @@ export function CardOwnerView({ cardId }: Props) {
 
       {isComplete && designTextureUrl && writingTextureUrl && (
         card.card_type === "postcard" ? (
-          <PostcardViewer frontTextureUrl={designTextureUrl} backTextureUrl={writingTextureUrl} flipped={toggled} />
+          <PostcardViewer
+            frontTextureUrl={designTextureUrl}
+            backTextureUrl={writingTextureUrl}
+            flipped={toggled}
+            onToggle={() => setToggled((t) => !t)}
+          />
         ) : (
           <GreetingCardViewer
             orientation={card.orientation}
             designTextureUrl={designTextureUrl}
             writingTextureUrl={writingTextureUrl}
             isOpen={toggled}
+            onToggle={() => setToggled((t) => !t)}
           />
         )
       )}

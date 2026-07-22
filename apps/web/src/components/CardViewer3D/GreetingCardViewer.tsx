@@ -7,6 +7,8 @@ import * as THREE from "three";
 
 import { useDominantColor } from "./useDominantColor";
 import { useHingeSpring } from "./useHingeSpring";
+import { useClickWithoutDrag } from "./useClickWithoutDrag";
+import { useHoverCursor } from "./useHoverCursor";
 import { useParallaxTilt } from "./useParallaxTilt";
 
 const PANEL_HEIGHT = 2;
@@ -67,15 +69,19 @@ function RightPanel({
   writingUrl,
   isOpen,
   liftRef,
+  onToggle,
 }: {
   panelWidth: number;
   writingUrl: string;
   isOpen: boolean;
   liftRef: RefObject<number>;
+  onToggle: () => void;
 }) {
   const pivotRef = useRef<THREE.Group>(null);
   const writingTexture = useTexture(writingUrl);
   writingTexture.colorSpace = THREE.SRGBColorSpace;
+  const hoverCursor = useHoverCursor();
+  const clickHandlers = useClickWithoutDrag(onToggle);
 
   useHingeSpring(pivotRef, isOpen ? OPEN_RIGHT : CLOSED_RIGHT);
   useFrame(() => {
@@ -84,7 +90,7 @@ function RightPanel({
 
   return (
     <group ref={pivotRef}>
-      <mesh position={[panelWidth / 2, 0, 0]}>
+      <mesh position={[panelWidth / 2, 0, 0]} {...clickHandlers} {...hoverCursor}>
         <boxGeometry args={[panelWidth, PANEL_HEIGHT, PANEL_THICKNESS]} />
         <meshBasicMaterial attach="material-0" color="white" toneMapped={false} />
         <meshBasicMaterial attach="material-1" color="white" toneMapped={false} />
@@ -122,15 +128,19 @@ function LeftPanel({
   designUrl,
   isOpen,
   liftRef,
+  onToggle,
 }: {
   panelWidth: number;
   designUrl: string;
   isOpen: boolean;
   liftRef: RefObject<number>;
+  onToggle: () => void;
 }) {
   const pivotRef = useRef<THREE.Group>(null);
   const designTexture = useTexture(designUrl);
   designTexture.colorSpace = THREE.SRGBColorSpace;
+  const hoverCursor = useHoverCursor();
+  const clickHandlers = useClickWithoutDrag(onToggle);
 
   // LeftPanel swings through ~150° (vs. RightPanel's ~30°) — the default spring's ~7.7%
   // overshoot is subtle in absolute degrees on a small swing but reads as a visible
@@ -143,7 +153,7 @@ function LeftPanel({
 
   return (
     <group ref={pivotRef}>
-      <mesh position={[-panelWidth / 2, 0, 0]}>
+      <mesh position={[-panelWidth / 2, 0, 0]} {...clickHandlers} {...hoverCursor}>
         <boxGeometry args={[panelWidth, PANEL_HEIGHT, PANEL_THICKNESS]} />
         <meshBasicMaterial attach="material-0" color="white" toneMapped={false} />
         <meshBasicMaterial attach="material-1" color="white" toneMapped={false} />
@@ -164,11 +174,13 @@ function Scene({
   designUrl,
   writingUrl,
   isOpen,
+  onToggle,
 }: {
   panelWidth: number;
   designUrl: string;
   writingUrl: string;
   isOpen: boolean;
+  onToggle: () => void;
 }) {
   const parallaxRef = useRef<THREE.Group>(null);
   const isDraggingRef = useRef(false);
@@ -179,8 +191,20 @@ function Scene({
     <>
       <group ref={parallaxRef}>
         <Suspense fallback={null}>
-          <RightPanel panelWidth={panelWidth} writingUrl={writingUrl} isOpen={isOpen} liftRef={liftRef} />
-          <LeftPanel panelWidth={panelWidth} designUrl={designUrl} isOpen={isOpen} liftRef={liftRef} />
+          <RightPanel
+            panelWidth={panelWidth}
+            writingUrl={writingUrl}
+            isOpen={isOpen}
+            liftRef={liftRef}
+            onToggle={onToggle}
+          />
+          <LeftPanel
+            panelWidth={panelWidth}
+            designUrl={designUrl}
+            isOpen={isOpen}
+            liftRef={liftRef}
+            onToggle={onToggle}
+          />
         </Suspense>
       </group>
       <OrbitControls
@@ -203,14 +227,16 @@ type Props = {
   designTextureUrl: string;
   writingTextureUrl: string;
   isOpen: boolean;
+  onToggle: () => void;
 };
 
 /**
  * Open-book greeting card. Closed: single panel, outside front = design
  * image. Open: ~150° dihedral, right panel = writing face, left = blank.
- * Open/close state is controlled by the caller.
+ * Open/close state is controlled by the caller — via the toolbar button, or
+ * by clicking the card directly (either panel's mesh has an onClick).
  */
-export function GreetingCardViewer({ orientation, designTextureUrl, writingTextureUrl, isOpen }: Props) {
+export function GreetingCardViewer({ orientation, designTextureUrl, writingTextureUrl, isOpen, onToggle }: Props) {
   const panelWidth = orientation === "portrait" ? PANEL_HEIGHT * (1200 / 1800) : PANEL_HEIGHT * (1800 / 1200);
   const dominantColor = useDominantColor(designTextureUrl);
 
@@ -220,7 +246,13 @@ export function GreetingCardViewer({ orientation, designTextureUrl, writingTextu
       style={isOpen && dominantColor ? { backgroundColor: dominantColor } : undefined}
     >
       <Canvas camera={{ position: [0, 0, 4], fov: 50 }}>
-        <Scene panelWidth={panelWidth} designUrl={designTextureUrl} writingUrl={writingTextureUrl} isOpen={isOpen} />
+        <Scene
+          panelWidth={panelWidth}
+          designUrl={designTextureUrl}
+          writingUrl={writingTextureUrl}
+          isOpen={isOpen}
+          onToggle={onToggle}
+        />
       </Canvas>
     </div>
   );
