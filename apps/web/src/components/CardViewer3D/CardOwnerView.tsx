@@ -4,12 +4,12 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
+  ArrowLeft,
   Book,
   BookOpen,
   Check,
   Copy,
   FlipHorizontal2,
-  Home,
   Image as ImageIcon,
   PenLine,
   SquarePen,
@@ -117,32 +117,13 @@ export function CardOwnerView({ cardId }: Props) {
         )
       )}
 
-      <div className="fixed top-6 left-1/2 z-20 flex -translate-x-1/2 items-center gap-2 rounded-2xl border border-border bg-background/80 p-2 shadow-lg backdrop-blur">
-        <Button
-          size="lg"
-          variant="ghost"
-          className="rounded-full text-base"
-          nativeButton={false}
-          render={
-            <Link href="/">
-              <Home data-icon="inline-start" className="size-5" />
-              Home
-            </Link>
-          }
-        />
-        <Button
-          size="lg"
-          variant="ghost"
-          className="rounded-full text-base"
-          nativeButton={false}
-          render={
-            <Link href={`/card/${cardId}/edit`}>
-              <SquarePen data-icon="inline-start" className="size-5" />
-              Edit
-            </Link>
-          }
-        />
-      </div>
+      <Link
+        href="/"
+        className="fixed top-6 left-6 z-20 inline-flex items-center gap-1.5 py-1 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+      >
+        <ArrowLeft className="size-4" />
+        Home
+      </Link>
 
       <div className="fixed bottom-6 left-1/2 z-20 flex max-w-[calc(100vw-2rem)] -translate-x-1/2 flex-wrap items-center justify-center gap-1.5 rounded-2xl border border-border bg-background/80 p-1.5 shadow-lg backdrop-blur">
         {ready && (
@@ -187,6 +168,17 @@ export function CardOwnerView({ cardId }: Props) {
           {copiedId === cardId ? <Check data-icon="inline-start" /> : <Copy data-icon="inline-start" />}
           {copiedId === cardId ? "Copied!" : "Copy share link"}
         </Button>
+        <Button
+          size="sm"
+          variant="ghost"
+          nativeButton={false}
+          render={
+            <Link href={`/card/${cardId}/edit`}>
+              <SquarePen data-icon="inline-start" />
+              Edit
+            </Link>
+          }
+        />
         <AlertDialog>
           <AlertDialogTrigger
             render={
