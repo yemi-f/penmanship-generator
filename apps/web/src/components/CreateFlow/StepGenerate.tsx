@@ -1,18 +1,16 @@
 "use client";
 
 import { useEffect, useRef, useState, type RefObject } from "react";
-import { Check, Copy, Loader2 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Loader2 } from "lucide-react";
 
 import { apiFetch } from "@/lib/api";
 import { parseSSE } from "@/lib/sse";
-import { useCopyToClipboard } from "@/lib/useCopyToClipboard";
-import type { CardCreateRequest, CardCreateResponse, GenerationCompleteData } from "@/lib/types";
+import type { CardCreateRequest, CardCreateResponse } from "@/lib/types";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 
-const SHARE_LINK_COPY_ID = "share-link";
-
-type Phase = "generating" | "storing" | "complete" | "error";
+type Phase = "generating" | "storing" | "error";
 
 // The backend only reports a single "generating" step for both the design and handwriting
 // AI calls (see services/api/app/service/cards.py). 35 is that step's pct checkpoint right
@@ -33,12 +31,11 @@ type Props = {
 };
 
 export function StepGenerate({ request, designPreviewPromiseRef, onBack }: Props) {
+  const router = useRouter();
   const [phase, setPhase] = useState<Phase>("generating");
   const [pct, setPct] = useState(0);
-  const [result, setResult] = useState<GenerationCompleteData | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const startedRef = useRef(false);
-  const { copiedId, copy } = useCopyToClipboard();
 
   useEffect(() => {
     if (startedRef.current) return;
@@ -67,8 +64,8 @@ export function StepGenerate({ request, designPreviewPromiseRef, onBack }: Props
             setPhase(data.step);
             setPct(data.pct);
           } else if (evt.event === "complete") {
-            setResult(data as GenerationCompleteData);
-            setPhase("complete");
+            router.replace(`/card/${card_id}`);
+            return;
           } else if (evt.event === "error") {
             setErrorMessage(data.message);
             setPhase("error");
@@ -81,7 +78,7 @@ export function StepGenerate({ request, designPreviewPromiseRef, onBack }: Props
     }
 
     run();
-  }, [request, designPreviewPromiseRef]);
+  }, [request, designPreviewPromiseRef, router]);
 
   if (phase === "error") {
     return (
@@ -91,37 +88,6 @@ export function StepGenerate({ request, designPreviewPromiseRef, onBack }: Props
         <Button type="button" variant="outline" onClick={onBack}>
           Back
         </Button>
-      </div>
-    );
-  }
-
-  if (phase === "complete" && result) {
-    const shareLink =
-      typeof window !== "undefined" ? `${window.location.origin}${result.share_url}` : result.share_url;
-    return (
-      <div className="flex flex-col gap-4">
-        <h2 className="text-lg font-semibold">Your card is ready</h2>
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <p className="mb-1 text-xs text-muted-foreground">Design</p>
-            <img src={result.design_url} alt="Card design" className="w-full rounded-md border" />
-          </div>
-          <div>
-            <p className="mb-1 text-xs text-muted-foreground">Handwriting</p>
-            <img src={result.writing_face_url} alt="Handwritten message" className="w-full rounded-md border" />
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <input readOnly value={shareLink} className="flex-1 rounded-md border px-3 py-2 text-sm" />
-          <Button type="button" onClick={() => copy(SHARE_LINK_COPY_ID, shareLink)}>
-            {copiedId === SHARE_LINK_COPY_ID ? (
-              <Check data-icon="inline-start" />
-            ) : (
-              <Copy data-icon="inline-start" />
-            )}
-            {copiedId === SHARE_LINK_COPY_ID ? "Copied!" : "Copy link"}
-          </Button>
-        </div>
       </div>
     );
   }
