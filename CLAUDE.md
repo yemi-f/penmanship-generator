@@ -147,9 +147,11 @@ Downloads (the "Download design"/"Download handwriting" buttons) are unaffected 
 ```
 pending → complete
 pending → failed
+complete → pending → complete   (editing an existing card via PATCH /api/cards/{card_id})
+complete → pending → failed     (edit regeneration fails)
 ```
 
-`meta.json` is written with `status: "pending"` before generation starts. It is updated to `"complete"` or `"failed"` after the generation call returns. Never leave a card in `"pending"` indefinitely — always update on error.
+`meta.json` is written with `status: "pending"` before generation starts. It is updated to `"complete"` or `"failed"` after the generation call returns. Never leave a card in `"pending"` indefinitely — always update on error. Editing an already-`"complete"` card (see "Editing a Card" below) re-enters this same lifecycle from `"pending"`.
 
 ---
 
@@ -164,6 +166,14 @@ event: error     data: { "message": "..." }
 ```
 
 Do not add new event types without updating this file and the frontend SSE handler.
+
+`GET /api/cards/{card_id}/update-stream?regenerate_design={bool}&regenerate_writing={bool}` is a second endpoint reusing this identical event contract — it does not introduce new event types. It's paired with `PATCH /api/cards/{card_id}` (see "Editing a Card" below): the PATCH writes the new text fields and returns which image(s) actually changed, then this stream regenerates only those.
+
+---
+
+## Editing a Card
+
+`PATCH /api/cards/{card_id}` lets the owner change `design_description`, `message`, `recipient_name`, and `sign_off` on an existing card — not `card_type`/`orientation`/`handwriting_style` (unsupported; would need a full recreate). It diffs the request against the stored `meta.json`, writes the new values, sets `status` back to `"pending"`, and returns `{"regenerate_design": bool, "regenerate_writing": bool}` — `regenerate_design` is true only if `design_description` changed; `regenerate_writing` is true if `message`, `recipient_name`, or `sign_off` changed (all three feed the same writing-face prompt). The caller then opens `GET /api/cards/{card_id}/update-stream` with those two flags as query params, which regenerates only the image(s) that actually changed and reuses the other's existing B2 object untouched — never regenerate both unconditionally, that doubles real GMICloud cost/time for a one-field edit.
 
 ---
 

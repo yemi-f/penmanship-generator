@@ -1,8 +1,20 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Book, BookOpen, Check, Copy, FlipHorizontal2, Image as ImageIcon, PenLine, Trash2 } from "lucide-react";
+import {
+  Book,
+  BookOpen,
+  Check,
+  Copy,
+  FlipHorizontal2,
+  Home,
+  Image as ImageIcon,
+  PenLine,
+  SquarePen,
+  Trash2,
+} from "lucide-react";
 
 import { apiFetch } from "@/lib/api";
 import { downloadBlob } from "@/lib/downloadFile";
@@ -104,6 +116,33 @@ export function CardOwnerView({ cardId }: Props) {
           />
         )
       )}
+
+      <div className="fixed top-6 left-1/2 z-20 flex -translate-x-1/2 items-center gap-2 rounded-2xl border border-border bg-background/80 p-2 shadow-lg backdrop-blur">
+        <Button
+          size="lg"
+          variant="ghost"
+          className="rounded-full text-base"
+          nativeButton={false}
+          render={
+            <Link href="/">
+              <Home data-icon="inline-start" className="size-5" />
+              Home
+            </Link>
+          }
+        />
+        <Button
+          size="lg"
+          variant="ghost"
+          className="rounded-full text-base"
+          nativeButton={false}
+          render={
+            <Link href={`/card/${cardId}/edit`}>
+              <SquarePen data-icon="inline-start" className="size-5" />
+              Edit
+            </Link>
+          }
+        />
+      </div>
 
       <div className="fixed bottom-6 left-1/2 z-20 flex max-w-[calc(100vw-2rem)] -translate-x-1/2 flex-wrap items-center justify-center gap-1.5 rounded-2xl border border-border bg-background/80 p-1.5 shadow-lg backdrop-blur">
         {ready && (

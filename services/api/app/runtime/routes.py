@@ -10,7 +10,7 @@ from app.repo.store import check_connection
 from app.runtime.auth import current_user
 from app.service import cards as cards_service
 from app.types.catalog import DEFAULT_STYLES
-from app.types.cards import CardCreateRequest, DesignPreviewCreateRequest
+from app.types.cards import CardCreateRequest, CardUpdateRequest, DesignPreviewCreateRequest
 from app.types.sample import SampleMeta
 
 router = APIRouter()
@@ -125,6 +125,26 @@ def create_design_preview(req: DesignPreviewCreateRequest, user_id: str = Depend
 def create_card(req: CardCreateRequest, user_id: str = Depends(current_user)) -> dict:
     meta = cards_service.create_card(user_id, req)
     return {"card_id": meta.card_id, "share_token": meta.share_token}
+
+
+@router.patch("/api/cards/{card_id}")
+def update_card(card_id: str, req: CardUpdateRequest, user_id: str = Depends(current_user)) -> dict:
+    return cards_service.update_card(user_id, card_id, req)
+
+
+@router.get("/api/cards/{card_id}/update-stream")
+def stream_card_update(
+    card_id: str,
+    regenerate_design: bool,
+    regenerate_writing: bool,
+    user_id: str = Depends(current_user),
+) -> StreamingResponse:
+    if not store.object_exists(f"users/{user_id}/cards/{card_id}/meta.json"):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="card not found")
+    return StreamingResponse(
+        cards_service.stream_update(user_id, card_id, regenerate_design, regenerate_writing),
+        media_type="text/event-stream",
+    )
 
 
 @router.get("/api/cards")

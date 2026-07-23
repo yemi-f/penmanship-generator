@@ -28,6 +28,15 @@ export type CardCreateRequest = {
 
 export type CardCreateResponse = { card_id: string; share_token: string };
 
+export type CardUpdateRequest = {
+  design_description: string;
+  message: string;
+  recipient_name: string | null;
+  sign_off: string | null;
+};
+
+export type CardUpdateResponse = { regenerate_design: boolean; regenerate_writing: boolean };
+
 export type GenerationCompleteData = {
   writing_face_url: string;
   design_url: string;

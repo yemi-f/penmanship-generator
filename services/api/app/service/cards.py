@@ -11,7 +11,7 @@ from starlette.concurrency import run_in_threadpool
 
 from app.repo import pipelines, store
 from app.service.prompts import build_design_prompt, build_edit_prompt, build_generate_prompt
-from app.types.cards import CardCreateRequest, CardMeta, DesignPreviewCreateRequest
+from app.types.cards import CardCreateRequest, CardMeta, CardUpdateRequest, DesignPreviewCreateRequest
 from app.types.catalog import DEFAULT_STYLES
 
 logger = logging.getLogger(__name__)
@@ -76,6 +76,34 @@ def create_card(user_id: str, req: CardCreateRequest) -> CardMeta:
     store.write_share_token(share_token, user_id=user_id, card_id=card_id)
 
     return meta
+
+
+def update_card(user_id: str, card_id: str, req: CardUpdateRequest) -> dict:
+    meta_key = f"users/{user_id}/cards/{card_id}/meta.json"
+    if not store.object_exists(meta_key):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="card not found")
+    meta = store.get_json(meta_key)
+
+    if meta["card_type"] == "postcard" and (not req.recipient_name or not req.sign_off):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="postcard requires recipient_name and sign_off"
+        )
+
+    regenerate_design = req.design_description != meta["design_description"]
+    regenerate_writing = (
+        req.message != meta["message"]
+        or req.recipient_name != meta.get("recipient_name")
+        or req.sign_off != meta.get("sign_off")
+    )
+
+    meta["design_description"] = req.design_description
+    meta["message"] = req.message
+    meta["recipient_name"] = req.recipient_name
+    meta["sign_off"] = req.sign_off
+    meta["status"] = "pending"
+    store.put_json(meta_key, meta)
+
+    return {"regenerate_design": regenerate_design, "regenerate_writing": regenerate_writing}
 
 
 def _sse(event: str, data: dict) -> str:
@@ -213,6 +241,61 @@ async def stream_generation(user_id: str, card_id: str) -> AsyncIterator[str]:
         )
     except Exception as exc:
         logger.error("card generation failed card_id=%s", card_id, exc_info=True)
+        meta["status"] = "failed"
+        store.put_json(meta_key, meta)
+        yield _sse("error", {"message": str(exc)})
+
+
+async def stream_update(
+    user_id: str, card_id: str, regenerate_design: bool, regenerate_writing: bool
+) -> AsyncIterator[str]:
+    # Existence is checked by the route before this generator starts (same reasoning as
+    # stream_generation). update_card() has already written the new text fields and set
+    # status="pending" — this generator only handles the (possibly partial) image regen.
+    meta_key = f"users/{user_id}/cards/{card_id}/meta.json"
+    meta = store.get_json(meta_key)
+    design_key = f"users/{user_id}/cards/{card_id}/design-face.png"
+    writing_face_key = f"users/{user_id}/cards/{card_id}/writing-face.png"
+
+    try:
+        generate_size, target_size = _CANVAS[meta["orientation"]]
+
+        yield _sse("status", {"step": "generating", "pct": 5})
+
+        if regenerate_design:
+            design_png = await run_in_threadpool(
+                _generate_design_face, meta["card_type"], meta["orientation"], meta["design_description"]
+            )
+            await run_in_threadpool(store.upload_file, design_key, design_png, content_type="image/png")
+
+        yield _sse("status", {"step": "generating", "pct": 50})
+
+        if regenerate_writing:
+            writing_raw = await _generate_writing_face(user_id, meta, generate_size)
+            writing_png = await run_in_threadpool(_resize_png, writing_raw, target_size)
+            await run_in_threadpool(store.upload_file, writing_face_key, writing_png, content_type="image/png")
+
+        yield _sse("status", {"step": "storing", "pct": 90})
+
+        design_url = store.presign_url(design_key)
+        writing_face_url = store.presign_url(writing_face_key)
+
+        meta["status"] = "complete"
+        meta["design_url"] = design_url
+        meta["writing_face_url"] = writing_face_url
+        store.put_json(meta_key, meta)
+
+        yield _sse("status", {"step": "storing", "pct": 100})
+        yield _sse(
+            "complete",
+            {
+                "writing_face_url": writing_face_url,
+                "design_url": design_url,
+                "share_url": f"/share/{meta['share_token']}",
+            },
+        )
+    except Exception as exc:
+        logger.error("card update failed card_id=%s", card_id, exc_info=True)
         meta["status"] = "failed"
         store.put_json(meta_key, meta)
         yield _sse("error", {"message": str(exc)})

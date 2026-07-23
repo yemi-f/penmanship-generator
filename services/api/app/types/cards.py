@@ -33,6 +33,13 @@ class CardCreateRequest(_SurfaceFields):
         return self
 
 
+class CardUpdateRequest(BaseModel):
+    design_description: str = Field(max_length=500, min_length=1)
+    message: str = Field(max_length=500, min_length=1)
+    recipient_name: str | None = Field(default=None, max_length=100)
+    sign_off: str | None = Field(default=None, max_length=300)
+
+
 class CardMeta(BaseModel):
     card_id: str
     user_id: str
