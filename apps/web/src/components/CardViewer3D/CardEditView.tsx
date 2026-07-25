@@ -28,6 +28,12 @@ export function CardEditView({ cardId }: Props) {
   const [message, setMessage] = useState("");
   const [recipientName, setRecipientName] = useState("");
   const [signOff, setSignOff] = useState("");
+  const [initialValues, setInitialValues] = useState<{
+    designDescription: string;
+    message: string;
+    recipientName: string;
+    signOff: string;
+  } | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -43,6 +49,12 @@ export function CardEditView({ cardId }: Props) {
         setMessage(meta.message);
         setRecipientName(meta.recipient_name ?? "");
         setSignOff(meta.sign_off ?? "");
+        setInitialValues({
+          designDescription: meta.design_description,
+          message: meta.message,
+          recipientName: meta.recipient_name ?? "",
+          signOff: meta.sign_off ?? "",
+        });
         setPhase("editing");
       } catch (err) {
         if (cancelled) return;
@@ -137,9 +149,15 @@ export function CardEditView({ cardId }: Props) {
     );
   }
 
-  if (!card) return null;
+  if (!card || !initialValues) return null;
 
-  const canSave = designDescription.trim().length > 0 && message.trim().length > 0;
+  const isDirty =
+    designDescription !== initialValues.designDescription ||
+    message !== initialValues.message ||
+    recipientName !== initialValues.recipientName ||
+    signOff !== initialValues.signOff;
+
+  const canSave = isDirty && designDescription.trim().length > 0 && message.trim().length > 0;
 
   return (
     <main className="mx-auto flex max-w-2xl flex-col gap-8 p-8">
