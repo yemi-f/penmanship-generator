@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { apiFetch } from "@/lib/api";
+import { dashboardCache } from "@/lib/dashboardCache";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -29,9 +30,10 @@ type SavedSample = {
 const MAX_SAMPLE_BYTES = 5 * 1024 * 1024;
 
 export function SampleLibrary() {
-  const [defaults, setDefaults] = useState<DefaultStyle[]>([]);
-  const [saved, setSaved] = useState<SavedSample[]>([]);
-  const [loading, setLoading] = useState(true);
+  const cached = dashboardCache.getSamples();
+  const [defaults, setDefaults] = useState<DefaultStyle[]>(cached?.defaults ?? []);
+  const [saved, setSaved] = useState<SavedSample[]>(cached?.saved ?? []);
+  const [loading, setLoading] = useState(!cached);
   const [label, setLabel] = useState("");
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -44,6 +46,7 @@ export function SampleLibrary() {
       const data = (await res.json()) as { defaults: DefaultStyle[]; saved: SavedSample[] };
       setDefaults(data.defaults);
       setSaved(data.saved);
+      dashboardCache.setSamples({ defaults: data.defaults, saved: data.saved });
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
@@ -52,6 +55,7 @@ export function SampleLibrary() {
   }, []);
 
   useEffect(() => {
+    if (dashboardCache.getSamples()) return;
     // refresh() only sets state after its internal `await`, never synchronously
     // on this first pass — standard fetch-on-mount, not a re-render cascade.
     // eslint-disable-next-line react-hooks/set-state-in-effect

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Check, Copy } from "lucide-react";
 
 import { apiFetch } from "@/lib/api";
+import { dashboardCache } from "@/lib/dashboardCache";
 import { useCopyToClipboard } from "@/lib/useCopyToClipboard";
 import type { CardMeta } from "@/lib/types";
 import { Button } from "@/components/ui/button";
@@ -23,10 +24,11 @@ import {
 const PAGE_SIZE = 20;
 
 export function CardGrid() {
-  const [cards, setCards] = useState<CardMeta[]>([]);
-  const [total, setTotal] = useState(0);
-  const [offset, setOffset] = useState(0);
-  const [loading, setLoading] = useState(true);
+  const cached = dashboardCache.getCards();
+  const [cards, setCards] = useState<CardMeta[]>(cached?.cards ?? []);
+  const [total, setTotal] = useState(cached?.total ?? 0);
+  const [offset, setOffset] = useState(cached?.offset ?? 0);
+  const [loading, setLoading] = useState(!cached);
   const [error, setError] = useState<string | null>(null);
   const { copiedId, copy } = useCopyToClipboard();
 
@@ -39,6 +41,7 @@ export function CardGrid() {
       setCards(data.cards);
       setTotal(data.total);
       setOffset(newOffset);
+      dashboardCache.setCards({ cards: data.cards, total: data.total, offset: newOffset });
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
@@ -47,6 +50,7 @@ export function CardGrid() {
   }, []);
 
   useEffect(() => {
+    if (dashboardCache.getCards()) return;
     // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch-on-mount; setState only ever fires after the internal await
     refresh(0);
   }, [refresh]);
@@ -69,7 +73,13 @@ export function CardGrid() {
       {error && <p className="text-sm text-destructive">{error}</p>}
 
       {loading ? (
-        <p className="text-sm text-muted-foreground">Loading…</p>
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
+          {Array.from({ length: PAGE_SIZE }).map((_, i) => (
+            <div key={i} className="flex flex-col gap-2 rounded-md border p-2">
+              <div className="aspect-[3/2] w-full animate-pulse rounded bg-muted" />
+            </div>
+          ))}
+        </div>
       ) : cards.length === 0 ? (
         <p className="text-sm text-muted-foreground">No cards yet — create one to get started.</p>
       ) : (
