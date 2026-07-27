@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 import { auth } from "@/lib/auth";
 
-const PROTECTED_PREFIXES = ["/dashboard", "/create", "/card"];
+const PROTECTED_PREFIXES = ["/cards", "/samples", "/create", "/card"];
 
 export default auth((req) => {
   const { pathname } = req.nextUrl;
@@ -15,5 +15,5 @@ export default auth((req) => {
 });
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/create/:path*", "/card/:path*"],
+  matcher: ["/cards/:path*", "/samples/:path*", "/create/:path*", "/card/:path*"],
 };

@@ -3,10 +3,13 @@ import { redirect } from "next/navigation";
 
 import { auth, signOut } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
-import { CardGrid } from "@/components/Dashboard/CardGrid";
-import { SampleLibrary } from "@/components/Dashboard/SampleLibrary";
+import { DashboardTabs } from "@/components/Dashboard/DashboardTabs";
 
-export default async function DashboardPage() {
+export default async function DashboardLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const session = await auth();
   if (!session?.user) {
     redirect("/");
@@ -35,8 +38,8 @@ export default async function DashboardPage() {
           </form>
         </div>
       </div>
-      <CardGrid />
-      <SampleLibrary />
+      <DashboardTabs />
+      {children}
     </main>
   );
 }

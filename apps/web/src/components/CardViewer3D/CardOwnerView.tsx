@@ -66,7 +66,7 @@ export function CardOwnerView({ cardId }: Props) {
 
   async function handleDelete() {
     const res = await apiFetch(`/api/cards/${cardId}`, { method: "DELETE" });
-    if (res.ok) router.push("/dashboard");
+    if (res.ok) router.push("/cards");
   }
 
   if (error) {

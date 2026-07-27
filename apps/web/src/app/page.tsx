@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 export default async function LandingPage() {
   const session = await auth();
   if (session?.user) {
-    redirect("/dashboard");
+    redirect("/cards");
   }
 
   return (
@@ -19,7 +19,7 @@ export default async function LandingPage() {
       <form
         action={async () => {
           "use server";
-          await signIn("google", { redirectTo: "/dashboard" });
+          await signIn("google", { redirectTo: "/cards" });
         }}
       >
         <Button type="submit" size="lg">

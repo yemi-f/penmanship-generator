@@ -1,6 +1,8 @@
 "use client";
 
 import { useRef, useState } from "react";
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 
 import { apiFetch } from "@/lib/api";
 import type { CardCreateRequest, CardType, DesignPreviewCreateRequest, Orientation } from "@/lib/types";
@@ -71,6 +73,14 @@ export function CreateFlow() {
 
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-8 p-8">
+      <Link
+        href="/cards"
+        className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+      >
+        <ArrowLeft className="size-4" />
+        Cancel
+      </Link>
+
       {step < 5 && (
         <ol className="flex gap-4 text-xs text-muted-foreground">
           {STEP_TITLES.map((title, i) => (
