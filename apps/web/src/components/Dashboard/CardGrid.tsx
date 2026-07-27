@@ -81,7 +81,10 @@ export function CardGrid() {
           ))}
         </div>
       ) : cards.length === 0 ? (
-        <p className="text-sm text-muted-foreground">No cards yet — create one to get started.</p>
+        <div className="flex flex-col items-start gap-3">
+          <p className="text-sm text-muted-foreground">No cards yet — create one to get started.</p>
+          <Button nativeButton={false} render={<Link href="/create">Create a card</Link>} />
+        </div>
       ) : (
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
           {cards.map((card) => (
