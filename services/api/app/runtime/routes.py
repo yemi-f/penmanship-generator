@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 from typing import Literal
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Response, UploadFile, status
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Request, Response, UploadFile, status
 from fastapi.responses import StreamingResponse
 from nanoid import generate as generate_nanoid
 
@@ -205,13 +205,27 @@ def delete_card(card_id: str, user_id: str = Depends(current_user)) -> dict:
     return {"deleted": True}
 
 
+def _texture_response(request: Request, key: str, *, private: bool) -> Response:
+    etag = store.get_object_etag(key)
+    if etag is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="texture not found")
+    cache_control = f"{'private' if private else 'public'}, max-age=0, must-revalidate"
+    if request.headers.get("if-none-match") == etag:
+        return Response(status_code=status.HTTP_304_NOT_MODIFIED, headers={"ETag": etag, "Cache-Control": cache_control})
+    return Response(
+        content=store.get_object(key),
+        media_type="image/png",
+        headers={"ETag": etag, "Cache-Control": cache_control},
+    )
+
+
 @router.get("/api/cards/{card_id}/textures/{face}")
-def get_card_texture(card_id: str, face: Literal["design", "writing"], user_id: str = Depends(current_user)) -> Response:
+def get_card_texture(
+    request: Request, card_id: str, face: Literal["design", "writing"], user_id: str = Depends(current_user)
+) -> Response:
     filename = "design-face.png" if face == "design" else "writing-face.png"
     key = f"users/{user_id}/cards/{card_id}/{filename}"
-    if not store.object_exists(key):
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="texture not found")
-    return Response(content=store.get_object(key), media_type="image/png")
+    return _texture_response(request, key, private=True)
 
 
 @router.get("/api/share/{share_token}")
@@ -237,13 +251,11 @@ def get_share(share_token: str) -> dict:
 
 
 @router.get("/api/share/{share_token}/textures/{face}")
-def get_share_texture(share_token: str, face: Literal["design", "writing"]) -> Response:
+def get_share_texture(request: Request, share_token: str, face: Literal["design", "writing"]) -> Response:
     resolved = store.read_share_token(share_token)
     if resolved is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="share link not found")
 
     filename = "design-face.png" if face == "design" else "writing-face.png"
     key = f"users/{resolved['user_id']}/cards/{resolved['card_id']}/{filename}"
-    if not store.object_exists(key):
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="texture not found")
-    return Response(content=store.get_object(key), media_type="image/png")
+    return _texture_response(request, key, private=False)

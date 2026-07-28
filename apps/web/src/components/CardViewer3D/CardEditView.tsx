@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 
 import { apiFetch } from "@/lib/api";
+import { dashboardCache } from "@/lib/dashboardCache";
 import { parseSSE } from "@/lib/sse";
 import type { CardMeta, CardUpdateRequest, CardUpdateResponse } from "@/lib/types";
 import { Button } from "@/components/ui/button";
@@ -102,6 +103,7 @@ export function CardEditView({ cardId }: Props) {
           setPhase(data.step);
           setPct(data.pct);
         } else if (evt.event === "complete") {
+          dashboardCache.invalidateCards();
           router.replace(`/card/${cardId}`);
           return;
         } else if (evt.event === "error") {

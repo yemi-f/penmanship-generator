@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 
 import { apiFetch } from "@/lib/api";
+import { dashboardCache } from "@/lib/dashboardCache";
 import { downloadBlob } from "@/lib/downloadFile";
 import { useBlobTextureUrl } from "@/lib/useBlobTextureUrl";
 import { useCopyToClipboard } from "@/lib/useCopyToClipboard";
@@ -66,7 +67,10 @@ export function CardOwnerView({ cardId }: Props) {
 
   async function handleDelete() {
     const res = await apiFetch(`/api/cards/${cardId}`, { method: "DELETE" });
-    if (res.ok) router.push("/cards");
+    if (res.ok) {
+      dashboardCache.invalidateCards();
+      router.push("/cards");
+    }
   }
 
   if (error) {

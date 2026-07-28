@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 
 import { apiFetch } from "@/lib/api";
+import { dashboardCache } from "@/lib/dashboardCache";
 import { parseSSE } from "@/lib/sse";
 import type { CardCreateRequest, CardCreateResponse } from "@/lib/types";
 import { Progress } from "@/components/ui/progress";
@@ -64,6 +65,7 @@ export function StepGenerate({ request, designPreviewPromiseRef, onBack }: Props
             setPhase(data.step);
             setPct(data.pct);
           } else if (evt.event === "complete") {
+            dashboardCache.invalidateCards();
             router.replace(`/card/${card_id}`);
             return;
           } else if (evt.event === "error") {

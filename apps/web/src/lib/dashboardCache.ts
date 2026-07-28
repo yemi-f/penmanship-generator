@@ -13,6 +13,9 @@ export const dashboardCache = {
   setCards: (v: CardsCache) => {
     cardsCache = v;
   },
+  invalidateCards: () => {
+    cardsCache = null;
+  },
   getSamples: () => samplesCache,
   setSamples: (v: SamplesCache) => {
     samplesCache = v;

@@ -40,6 +40,11 @@ def object_exists(key: str) -> bool:
     return _backend().exists(key)
 
 
+def get_object_etag(key: str) -> str | None:
+    meta = _backend().head(key)
+    return meta.etag if meta else None
+
+
 def delete_object(key: str) -> None:
     _backend().delete(key)
 
