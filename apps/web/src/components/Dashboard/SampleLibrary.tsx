@@ -151,14 +151,14 @@ export function SampleLibrary() {
                     <img
                       src={s.sample_thumb_url ?? s.sample_url}
                       alt={s.label}
-                      className="w-full rounded"
+                      className="aspect-[4/3] w-full rounded object-cover"
                       onError={(e) => {
                         if (e.currentTarget.src !== s.sample_url) {
                           e.currentTarget.src = s.sample_url;
                         }
                       }}
                     />
-                    <p className="mt-1 text-xs">{s.label}</p>
+                    <p className="mt-1 line-clamp-2 min-h-8 text-xs">{s.label}</p>
                     <AlertDialog>
                       <AlertDialogTrigger
                         render={
