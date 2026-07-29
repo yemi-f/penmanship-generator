@@ -279,7 +279,7 @@ export function GreetingCardViewer({ orientation, designTextureUrl, writingTextu
       className="fixed inset-0 h-dvh w-dvw touch-none overflow-hidden bg-muted transition-colors duration-500"
       style={isOpen && dominantColor ? { backgroundColor: dominantColor } : undefined}
     >
-      <Canvas camera={{ position: [0, 0, 4], fov: 50 }}>
+      <Canvas camera={{ position: [0, 0, 4 / 1.2], fov: 50 }}>
         <Scene
           panelWidth={panelWidth}
           designUrl={designTextureUrl}
