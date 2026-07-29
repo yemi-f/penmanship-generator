@@ -1,7 +1,11 @@
+import type { Metadata } from "next";
+
 import { CardRecipientView } from "@/components/CardViewer3D/CardRecipientView";
 import type { ShareData } from "@/lib/types";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+
+export const metadata: Metadata = { title: "A Card For You" };
 
 export default async function SharePage({ params }: { params: Promise<{ share_token: string }> }) {
   const { share_token } = await params;

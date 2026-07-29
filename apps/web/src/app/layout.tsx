@@ -13,7 +13,10 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Penmanship",
+  title: {
+    default: "Penmanship",
+    template: "%s | Penmanship",
+  },
   description: "Personalized greeting cards and postcards, written in a real person's handwriting.",
   icons: {
     icon: [
