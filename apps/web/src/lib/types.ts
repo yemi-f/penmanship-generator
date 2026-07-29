@@ -53,6 +53,7 @@ export type CardMeta = {
   orientation: Orientation;
   design_description: string;
   design_url: string | null;
+  design_thumb_url: string | null;
   handwriting_style: string;
   handwriting_label: string;
   message: string;

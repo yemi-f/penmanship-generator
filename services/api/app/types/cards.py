@@ -48,6 +48,7 @@ class CardMeta(BaseModel):
     orientation: str
     design_description: str
     design_url: str | None
+    design_thumb_url: str | None = None
     handwriting_style: str
     handwriting_label: str
     message: str

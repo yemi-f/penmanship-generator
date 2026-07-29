@@ -4,11 +4,13 @@ from typing import Literal
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Request, Response, UploadFile, status
 from fastapi.responses import StreamingResponse
 from nanoid import generate as generate_nanoid
+from starlette.concurrency import run_in_threadpool
 
 from app.repo import store
 from app.repo.store import check_connection
 from app.runtime.auth import current_user
 from app.service import cards as cards_service
+from app.service.thumbnails import make_thumbnail
 from app.types.catalog import DEFAULT_STYLES
 from app.types.cards import CardCreateRequest, CardUpdateRequest, DesignPreviewCreateRequest
 from app.types.sample import SampleMeta
@@ -30,9 +32,11 @@ def _refresh_card_urls(meta: dict, base: str) -> None:
     """
     if meta["status"] == "complete":
         meta["design_url"] = store.presign_url(f"{base}/design-face.png")
+        meta["design_thumb_url"] = store.presign_url(f"{base}/design-face-thumb.jpg")
         meta["writing_face_url"] = store.presign_url(f"{base}/writing-face.png")
     else:
         meta["design_url"] = None
+        meta["design_thumb_url"] = None
         meta["writing_face_url"] = None
 
 
@@ -59,7 +63,9 @@ def samples(user_id: str = Depends(current_user)) -> dict:
     saved = []
     for sample_id in store.read_index(f"users/{user_id}/handwriting-samples/index.json"):
         meta = store.get_json(f"users/{user_id}/handwriting-samples/{sample_id}/meta.json")
-        meta["sample_url"] = store.presign_url(f"users/{user_id}/handwriting-samples/{sample_id}/sample.png")
+        sample_base = f"users/{user_id}/handwriting-samples/{sample_id}"
+        meta["sample_url"] = store.presign_url(f"{sample_base}/sample.png")
+        meta["sample_thumb_url"] = store.presign_url(f"{sample_base}/sample-thumb.jpg")
         saved.append(meta)
     return {"defaults": defaults, "saved": saved}
 
@@ -85,21 +91,26 @@ async def upload_sample(
 
     sample_id = generate_nanoid(size=12)
     sample_key = f"users/{user_id}/handwriting-samples/{sample_id}/sample.png"
+    sample_thumb_key = f"users/{user_id}/handwriting-samples/{sample_id}/sample-thumb.jpg"
     meta_key = f"users/{user_id}/handwriting-samples/{sample_id}/meta.json"
 
+    thumb = await run_in_threadpool(make_thumbnail, data)
     store.upload_file(sample_key, data, content_type=file.content_type)
+    store.upload_file(sample_thumb_key, thumb, content_type="image/jpeg")
     sample_url = store.presign_url(sample_key)
+    sample_thumb_url = store.presign_url(sample_thumb_key)
     meta = SampleMeta(
         sample_id=sample_id,
         user_id=user_id,
         created_at=datetime.now(timezone.utc).isoformat(),
         label=label,
         sample_url=sample_url,
+        sample_thumb_url=sample_thumb_url,
     )
     store.put_json(meta_key, meta.model_dump())
     store.prepend_index(f"users/{user_id}/handwriting-samples/index.json", sample_id)
 
-    return {"sample_id": sample_id, "sample_url": sample_url}
+    return {"sample_id": sample_id, "sample_url": sample_url, "sample_thumb_url": sample_thumb_url}
 
 
 @router.delete("/api/samples/{sample_id}")
@@ -113,6 +124,28 @@ def delete_sample(sample_id: str, user_id: str = Depends(current_user)) -> dict:
     store.remove_from_index(f"users/{user_id}/handwriting-samples/index.json", sample_id)
 
     return {"deleted": True}
+
+
+def _backfill_sample_thumbnails(user_id: str) -> int:
+    count = 0
+    for sample_id in store.read_index(f"users/{user_id}/handwriting-samples/index.json"):
+        base = f"users/{user_id}/handwriting-samples/{sample_id}"
+        if not store.object_exists(f"{base}/meta.json"):
+            continue
+        thumb_key = f"{base}/sample-thumb.jpg"
+        if store.object_exists(thumb_key):
+            continue
+        sample_png = store.get_object(f"{base}/sample.png")
+        store.upload_file(thumb_key, make_thumbnail(sample_png), content_type="image/jpeg")
+        count += 1
+    return count
+
+
+@router.post("/api/backfill-thumbnails")
+async def backfill_thumbnails(user_id: str = Depends(current_user)) -> dict:
+    cards_backfilled = await run_in_threadpool(cards_service.backfill_design_thumbnails, user_id)
+    samples_backfilled = await run_in_threadpool(_backfill_sample_thumbnails, user_id)
+    return {"cards_backfilled": cards_backfilled, "samples_backfilled": samples_backfilled}
 
 
 @router.post("/api/design-previews")

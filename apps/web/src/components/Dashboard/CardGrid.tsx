@@ -91,7 +91,16 @@ export function CardGrid() {
             <div key={card.card_id} className="flex flex-col gap-2 rounded-md border p-2">
               <Link href={`/card/${card.card_id}`}>
                 {card.status === "complete" && card.design_url ? (
-                  <img src={card.design_url} alt="" className="aspect-[3/2] w-full rounded object-cover" />
+                  <img
+                    src={card.design_thumb_url ?? card.design_url}
+                    alt=""
+                    className="aspect-[3/2] w-full rounded object-cover"
+                    onError={(e) => {
+                      if (card.design_url && e.currentTarget.src !== card.design_url) {
+                        e.currentTarget.src = card.design_url;
+                      }
+                    }}
+                  />
                 ) : (
                   <div className="flex aspect-[3/2] w-full items-center justify-center rounded bg-muted text-xs text-muted-foreground">
                     {card.status === "pending" ? "Generating…" : "Failed"}

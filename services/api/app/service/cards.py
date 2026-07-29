@@ -11,6 +11,7 @@ from starlette.concurrency import run_in_threadpool
 
 from app.repo import pipelines, store
 from app.service.prompts import build_design_prompt, build_edit_prompt, build_generate_prompt
+from app.service.thumbnails import make_thumbnail
 from app.types.cards import CardCreateRequest, CardMeta, CardUpdateRequest, DesignPreviewCreateRequest
 from app.types.catalog import DEFAULT_STYLES
 
@@ -104,6 +105,24 @@ def update_card(user_id: str, card_id: str, req: CardUpdateRequest) -> dict:
     store.put_json(meta_key, meta)
 
     return {"regenerate_design": regenerate_design, "regenerate_writing": regenerate_writing}
+
+
+def backfill_design_thumbnails(user_id: str) -> int:
+    count = 0
+    for card_id in store.read_index(f"users/{user_id}/cards/index.json"):
+        base = f"users/{user_id}/cards/{card_id}"
+        if not store.object_exists(f"{base}/meta.json"):
+            continue
+        meta = store.get_json(f"{base}/meta.json")
+        if meta.get("status") != "complete":
+            continue
+        thumb_key = f"{base}/design-face-thumb.jpg"
+        if store.object_exists(thumb_key):
+            continue
+        design_png = store.get_object(f"{base}/design-face.png")
+        store.upload_file(thumb_key, make_thumbnail(design_png), content_type="image/jpeg")
+        count += 1
+    return count
 
 
 def _sse(event: str, data: dict) -> str:
@@ -207,6 +226,7 @@ async def stream_generation(user_id: str, card_id: str) -> AsyncIterator[str]:
             design_png = await run_in_threadpool(
                 _generate_design_face, meta["card_type"], meta["orientation"], meta["design_description"]
             )
+        design_thumb = await run_in_threadpool(make_thumbnail, design_png)
 
         yield _sse("status", {"step": "generating", "pct": 35})
 
@@ -219,8 +239,10 @@ async def stream_generation(user_id: str, card_id: str) -> AsyncIterator[str]:
         yield _sse("status", {"step": "storing", "pct": 80})
 
         design_key = f"users/{user_id}/cards/{card_id}/design-face.png"
+        design_thumb_key = f"users/{user_id}/cards/{card_id}/design-face-thumb.jpg"
         writing_face_key = f"users/{user_id}/cards/{card_id}/writing-face.png"
         await run_in_threadpool(store.upload_file, design_key, design_png, content_type="image/png")
+        await run_in_threadpool(store.upload_file, design_thumb_key, design_thumb, content_type="image/jpeg")
         await run_in_threadpool(store.upload_file, writing_face_key, writing_png, content_type="image/png")
         design_url = store.presign_url(design_key)
         writing_face_url = store.presign_url(writing_face_key)
@@ -255,6 +277,7 @@ async def stream_update(
     meta_key = f"users/{user_id}/cards/{card_id}/meta.json"
     meta = store.get_json(meta_key)
     design_key = f"users/{user_id}/cards/{card_id}/design-face.png"
+    design_thumb_key = f"users/{user_id}/cards/{card_id}/design-face-thumb.jpg"
     writing_face_key = f"users/{user_id}/cards/{card_id}/writing-face.png"
 
     try:
@@ -266,7 +289,11 @@ async def stream_update(
             design_png = await run_in_threadpool(
                 _generate_design_face, meta["card_type"], meta["orientation"], meta["design_description"]
             )
+            design_thumb = await run_in_threadpool(make_thumbnail, design_png)
             await run_in_threadpool(store.upload_file, design_key, design_png, content_type="image/png")
+            await run_in_threadpool(
+                store.upload_file, design_thumb_key, design_thumb, content_type="image/jpeg"
+            )
 
         yield _sse("status", {"step": "generating", "pct": 50})
 

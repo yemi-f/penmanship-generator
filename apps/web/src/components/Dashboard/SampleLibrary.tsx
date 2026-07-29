@@ -24,6 +24,7 @@ type SavedSample = {
   sample_id: string;
   label: string;
   sample_url: string;
+  sample_thumb_url: string | null;
   created_at: string;
 };
 
@@ -147,7 +148,16 @@ export function SampleLibrary() {
               <div className="flex flex-wrap gap-3">
                 {saved.map((s) => (
                   <div key={s.sample_id} className="w-40 rounded-md border p-2">
-                    <img src={s.sample_url} alt={s.label} className="w-full rounded" />
+                    <img
+                      src={s.sample_thumb_url ?? s.sample_url}
+                      alt={s.label}
+                      className="w-full rounded"
+                      onError={(e) => {
+                        if (e.currentTarget.src !== s.sample_url) {
+                          e.currentTarget.src = s.sample_url;
+                        }
+                      }}
+                    />
                     <p className="mt-1 text-xs">{s.label}</p>
                     <AlertDialog>
                       <AlertDialogTrigger
