@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { Check, Copy } from "lucide-react";
+import { Check, Copy, Trash2 } from "lucide-react";
 
 import { apiFetch } from "@/lib/api";
 import { dashboardCache } from "@/lib/dashboardCache";
@@ -128,8 +128,8 @@ export function CardGrid() {
                 <AlertDialog>
                   <AlertDialogTrigger
                     render={
-                      <Button type="button" size="sm" variant="destructive">
-                        Delete
+                      <Button type="button" size="icon-sm" variant="outline" title="Delete" aria-label="Delete">
+                        <Trash2 />
                       </Button>
                     }
                   />
