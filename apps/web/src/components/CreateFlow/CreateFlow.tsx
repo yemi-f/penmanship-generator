@@ -28,7 +28,7 @@ function fireDesignPreview(payload: DesignPreviewCreateRequest): Promise<string 
 export function CreateFlow() {
   const [step, setStep] = useState(1);
   const [cardType, setCardType] = useState<CardType>("postcard");
-  const [orientation, setOrientation] = useState<Orientation>("landscape");
+  const [orientation, setOrientation] = useState<Orientation>("portrait");
   const [designDescription, setDesignDescription] = useState("");
   const [handwritingStyle, setHandwritingStyle] = useState("");
   const [message, setMessage] = useState("");

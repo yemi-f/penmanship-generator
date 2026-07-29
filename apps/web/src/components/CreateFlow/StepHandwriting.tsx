@@ -1,10 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { apiFetch } from "@/lib/api";
 import type { DefaultStyleOption, SavedSampleOption } from "@/lib/types";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
@@ -22,7 +21,6 @@ export function StepHandwriting({ handwritingStyle, onChange }: Props) {
   const [label, setLabel] = useState("");
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const refresh = useCallback(async () => {
     try {
@@ -43,34 +41,35 @@ export function StepHandwriting({ handwritingStyle, onChange }: Props) {
     refresh();
   }, [refresh]);
 
-  async function handleUpload(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
+  async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     setError(null);
 
-    const file = fileInputRef.current?.files?.[0];
-    if (!file) {
-      setError("Choose a PNG or JPEG file first.");
-      return;
-    }
+    const file = e.target.files?.[0];
+    if (!file) return;
+
     if (!["image/png", "image/jpeg"].includes(file.type)) {
       setError("File must be PNG or JPEG.");
+      e.target.value = "";
       return;
     }
     if (file.size > MAX_SAMPLE_BYTES) {
       setError("File must be 5MB or smaller.");
+      e.target.value = "";
       return;
     }
+
+    const resolvedLabel = label.trim() || file.name.replace(/\.[^.]+$/, "");
 
     setUploading(true);
     try {
       const formData = new FormData();
       formData.append("file", file);
-      formData.append("label", label);
+      formData.append("label", resolvedLabel);
       const res = await apiFetch("/api/samples", { method: "POST", body: formData });
       if (!res.ok) throw new Error(`Upload failed (${res.status})`);
       const created = (await res.json()) as { sample_id: string };
       setLabel("");
-      if (fileInputRef.current) fileInputRef.current.value = "";
+      e.target.value = "";
       await refresh();
       onChange(`saved:${created.sample_id}`);
     } catch (err) {
@@ -135,25 +134,29 @@ export function StepHandwriting({ handwritingStyle, onChange }: Props) {
         )}
       </div>
 
-      <form onSubmit={handleUpload} className="flex flex-wrap items-end gap-3">
+      <div className="flex flex-wrap items-end gap-3">
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="new-sample-label">Upload new sample — Label</Label>
+          <Label htmlFor="new-sample-label">Label (optional)</Label>
           <Input
             id="new-sample-label"
             placeholder="My casual handwriting"
             value={label}
             onChange={(e) => setLabel(e.target.value)}
-            required
+            disabled={uploading}
           />
         </div>
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="new-sample-file">File (PNG/JPEG, max 5MB)</Label>
-          <Input id="new-sample-file" type="file" accept="image/png,image/jpeg" ref={fileInputRef} />
+          <Label htmlFor="new-sample-file">Upload new sample (PNG/JPEG, max 5MB)</Label>
+          <Input
+            id="new-sample-file"
+            type="file"
+            accept="image/png,image/jpeg"
+            onChange={handleFileChange}
+            disabled={uploading}
+          />
         </div>
-        <Button type="submit" disabled={uploading}>
-          {uploading ? "Uploading…" : "Upload & select"}
-        </Button>
-      </form>
+        {uploading && <p className="text-sm text-muted-foreground">Uploading…</p>}
+      </div>
     </div>
   );
 }
