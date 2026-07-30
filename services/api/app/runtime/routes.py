@@ -56,7 +56,7 @@ def samples(user_id: str = Depends(current_user)) -> dict:
         {
             "slug": s["slug"],
             "label": s["label"],
-            "preview_url": store.public_url(f"handwriting-samples/default/{s['slug']}-preview.png"),
+            "preview_url": f"/handwriting-samples/{s['slug']}-preview.png",
         }
         for s in DEFAULT_STYLES
     ]

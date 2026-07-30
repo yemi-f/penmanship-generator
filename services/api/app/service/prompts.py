@@ -13,21 +13,11 @@ STYLE_PROMPTS = {
         "slightly thicker on downstrokes, thinner on upstrokes. Even, measured baseline. The writing looks "
         "considered and graceful, like a personal letter written with care."
     ),
-    "neat-print": (
-        "Precise, careful block print handwriting, written with a fine-tip pen. Letters are upright with no slant. "
-        "Even, consistent letter sizing and spacing. Clean uniform strokes with no ink bleed. The writing looks "
-        "deliberate and easy to read, like someone who takes pride in their penmanship."
-    ),
     "bold-marker": (
         "Bold expressive handwriting written with a wide felt-tip marker. Thick, confident strokes. Slightly "
         "uneven baseline — the writer is not being precious about perfect alignment. Letters are large and "
         "well-spaced. Ink is deep black. The writing has energy and presence, like a note left in a hurry "
         "but with confidence."
-    ),
-    "tiny-script": (
-        "Small, delicate handwriting written with a fine-tip pen or fine rollerball. Compact letter spacing "
-        "and tight line spacing. Light, thin strokes. The letters are legible but small — as if the writer "
-        "is being economical with space. The overall impression is careful, quiet, and intimate."
     ),
 }
 
@@ -146,14 +136,6 @@ def build_edit_prompt(
         f'"{_escape(_full_message(message, sign_off))}"'
         f"{_sign_off_guidance(card_type, sign_off)}"
         f"{_addressing_fragment(recipient_name)}"
-    )
-
-
-def build_swatch_prompt(style_slug: str) -> str:
-    return (
-        f"Plain white background. {STYLE_PROMPTS[style_slug]}\n\n"
-        'Write the following text exactly as given:\n'
-        '"The quick brown fox jumps over the lazy dog"'
     )
 
 

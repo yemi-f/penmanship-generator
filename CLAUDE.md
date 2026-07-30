@@ -68,7 +68,7 @@ No SQLite. No Redis. No Postgres. No in-memory state that needs to persist. If s
 
 ### 6. All user assets via presigned URLs
 
-Never expose raw B2 paths for anything under `users/`. Always generate presigned URLs with 1-hour TTL at read time. Default style previews are the only public B2 objects — Image A (design) is now generated per-card and lives under `users/`, so it is presigned like every other user asset, not public.
+Never expose raw B2 paths for anything under `users/`. Always generate presigned URLs with 1-hour TTL at read time. There are no public B2 objects in the active system — Image A (design) is generated per-card and lives under `users/`, so it is presigned like every other user asset. Default style previews aren't B2 objects at all anymore (see "B2 Path Conventions" below); they're static assets committed to the frontend.
 
 ### 7. NEXTAUTH_SECRET is shared
 
@@ -91,9 +91,6 @@ Enforce on both the client (textarea `maxLength` + counter) and the server (Pyda
 ## B2 Path Conventions
 
 ```
-# Shared public assets
-handwriting-samples/default/{style_slug}-preview.png
-
 # Share token lookup
 share-tokens/{share_token}.json   → { user_id, card_id }
 
@@ -112,6 +109,8 @@ users/{user_id}/design-previews/{design_preview_id}.png
 Do not invent new paths. If a new persistent object is needed, confirm the path convention matches this layout.
 
 `card-designs/{design_slug}.png` (the six Phase 4 stock designs) is no longer part of the active system — Image A is now generated per-card, not picked from a preset. Those six objects are still sitting in B2, unreferenced by any code; they were not deleted, just abandoned. Ignore them.
+
+`handwriting-samples/default/{style_slug}-preview.png` is likewise no longer part of the active system. These were originally generated once via `gpt-image-2-generate` and uploaded to B2 as public objects; since they're fixed forever, routing them through a paid third-party call (and the resulting quality — `cursive` and `neat-print` didn't read as genuinely handwritten) wasn't worth it. They are now real static images committed at `apps/web/public/handwriting-samples/{style_slug}-preview.png`, served directly by Next.js — not generated, not B2-backed. The five original B2 objects are still sitting in B2, unreferenced; not deleted, just abandoned. Ignore them.
 
 `design-previews/{design_preview_id}.png` is a flat object — no `meta.json`, no `index.json`. Nothing worth persisting about a preview, and it's never listed in any UI. See "Design Preview Pre-generation" below.
 

@@ -53,10 +53,6 @@ def presign_url(key: str, *, expires_in: int = 3600) -> str:
     return _backend().presigned_get_url(key, expires_in=expires_in)
 
 
-def public_url(key: str) -> str:
-    return _backend().get_durable_url(key)
-
-
 def put_json(key: str, obj: Any) -> None:
     upload_file(key, json.dumps(obj).encode("utf-8"), content_type="application/json")
 

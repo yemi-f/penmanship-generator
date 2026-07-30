@@ -108,14 +108,6 @@ slightly thicker on downstrokes, thinner on upstrokes. Even, measured baseline. 
 considered and graceful, like a personal letter written with care.
 ```
 
-### `neat-print`
-
-```
-Precise, careful block print handwriting, written with a fine-tip pen. Letters are upright with no slant. 
-Even, consistent letter sizing and spacing. Clean uniform strokes with no ink bleed. The writing looks 
-deliberate and easy to read, like someone who takes pride in their penmanship.
-```
-
 ### `bold-marker`
 
 ```
@@ -123,14 +115,6 @@ Bold expressive handwriting written with a wide felt-tip marker. Thick, confiden
 uneven baseline — the writer is not being precious about perfect alignment. Letters are large and 
 well-spaced. Ink is deep black. The writing has energy and presence, like a note left in a hurry 
 but with confidence.
-```
-
-### `tiny-script`
-
-```
-Small, delicate handwriting written with a fine-tip pen or fine rollerball. Compact letter spacing 
-and tight line spacing. Light, thin strokes. The letters are legible but small — as if the writer 
-is being economical with space. The overall impression is careful, quiet, and intimate.
 ```
 
 ---
@@ -173,17 +157,16 @@ Same postcard-only sign-off and addressing additions described above apply here 
 
 ## Swatch Preview Generation
 
-Run once at deploy time to generate the five default style preview images stored in B2 at
-`handwriting-samples/default/{style_slug}-preview.png`. These are display-only — never used in card generation.
-
-Use `gpt-image-2-generate` with the following prompt structure per style:
-
-```
-Plain white background. {style_prompt}
-
-Write the following text exactly as given:
-"The quick brown fox jumps over the lazy dog"
-```
+**Changed from the original spec.** The five default style preview swatches were originally
+generated once via `gpt-image-2-generate` at deploy time and uploaded to B2 as public objects
+(`handwriting-samples/default/{style_slug}-preview.png`). Since these images never change, routing
+them through a paid third-party generation call — and the resulting quality (particularly `cursive`
+and `neat-print` not reading as genuinely handwritten) — wasn't worth it for a fixed asset. They are
+now real static images committed directly into the repo at
+`apps/web/public/handwriting-samples/{style_slug}-preview.png` and served by Next.js, not generated
+or B2-backed at all. These are still display-only — never used in card generation. The five original
+B2 objects are still sitting in B2, unreferenced by any code; they were not deleted, just abandoned,
+same as the six stock design images below.
 
 Canvas: 800 × 300 px (landscape strip, suitable for a UI swatch).
 
