@@ -26,4 +26,7 @@ export const dashboardCache = {
   setSamples: (v: SamplesCache) => {
     samplesCache = v;
   },
+  invalidateSamples: () => {
+    samplesCache = null;
+  },
 };

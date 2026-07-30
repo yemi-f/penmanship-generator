@@ -49,6 +49,21 @@ def delete_object(key: str) -> None:
     _backend().delete(key)
 
 
+def list_keys(prefix: str) -> list[str]:
+    keys: list[str] = []
+    token: str | None = None
+    while True:
+        page = _backend().list(prefix, continuation_token=token)
+        keys.extend(entry.key for entry in page.entries)
+        if page.next_token is None:
+            return keys
+        token = page.next_token
+
+
+def copy_object(src_key: str, dst_key: str) -> None:
+    _backend().copy(src_key, dst_key)
+
+
 def presign_url(key: str, *, expires_in: int = 3600) -> str:
     return _backend().presigned_get_url(key, expires_in=expires_in)
 

@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
-import { auth, signOut } from "@/lib/auth";
+import { auth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { DashboardTabs } from "@/components/Dashboard/DashboardTabs";
+import { SignOutButton } from "@/components/Dashboard/SignOutButton";
 
 export default async function DashboardLayout({
   children,
@@ -26,16 +27,7 @@ export default async function DashboardLayout({
         </div>
         <div className="flex items-center gap-2">
           <Button nativeButton={false} render={<Link href="/create">Create a card</Link>} />
-          <form
-            action={async () => {
-              "use server";
-              await signOut({ redirectTo: "/" });
-            }}
-          >
-            <Button type="submit" variant="outline">
-              Sign out
-            </Button>
-          </form>
+          <SignOutButton />
         </div>
       </div>
       <DashboardTabs />

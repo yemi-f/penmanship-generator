@@ -17,6 +17,15 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     async jwt({ token, profile }) {
       if (profile) {
         token.picture = (profile as { picture?: string }).picture ?? token.picture;
+        // Auth.js has no adapter configured, so its default adapter-less OAuth flow
+        // discards Google's stable account sub and assigns a fresh crypto.randomUUID()
+        // to user.id on every sign-in. Pin token.sub back to the real Google sub here
+        // so session.user.id (and the B2 users/{user_id}/ prefix derived from it) stays
+        // stable across sign-out/sign-in for the same account.
+        const googleSub = (profile as { sub?: string }).sub;
+        if (typeof googleSub === "string") {
+          token.sub = googleSub;
+        }
       }
       return token;
     },
