@@ -111,10 +111,12 @@ considered and graceful, like a personal letter written with care.
 ### `bold-marker`
 
 ```
-Bold expressive handwriting written with a wide felt-tip marker. Thick, confident strokes. Slightly 
-uneven baseline — the writer is not being precious about perfect alignment. Letters are large and 
-well-spaced. Ink is deep black. The writing has energy and presence, like a note left in a hurry 
-but with confidence.
+Bold expressive handwriting written with a wide felt-tip marker. Thick, confident strokes, 
+but with natural inconsistency — stroke width varies with marker angle and hand pressure, and 
+ink saturation is uneven, with occasional lighter, drier patches where the marker runs low. 
+Slightly uneven baseline — the writer is not being precious about perfect alignment. Letters 
+are large and well-spaced, though not perfectly uniform in weight. Ink is deep black at its 
+boldest. The writing has energy and presence, like a note left in a hurry but with confidence.
 ```
 
 ---
