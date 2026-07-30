@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 
 import { apiFetch } from "@/lib/api";
 import { dashboardCache } from "@/lib/dashboardCache";
+import { SampleThumbnail } from "@/components/SampleThumbnail";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -152,11 +153,11 @@ export function SampleLibrary() {
               <div className="flex flex-wrap gap-3">
                 {saved.map((s) => (
                   <div key={s.sample_id} className="w-40 rounded-md border p-2">
-                    <img
+                    <SampleThumbnail
                       src={s.sample_thumb_url ?? s.sample_url}
+                      fullSrc={s.sample_url}
                       alt={s.label}
-                      className="aspect-[4/3] w-full rounded object-cover"
-                      onError={(e) => {
+                      onImgError={(e) => {
                         if (e.currentTarget.src !== s.sample_url) {
                           e.currentTarget.src = s.sample_url;
                         }

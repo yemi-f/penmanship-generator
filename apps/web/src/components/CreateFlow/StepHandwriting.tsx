@@ -6,6 +6,14 @@ import { apiFetch } from "@/lib/api";
 import type { DefaultStyleOption, SavedSampleOption } from "@/lib/types";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { SampleThumbnail } from "@/components/SampleThumbnail";
+
+function selectKeyDown(e: React.KeyboardEvent, onSelect: () => void) {
+  if (e.key === "Enter" || e.key === " ") {
+    e.preventDefault();
+    onSelect();
+  }
+}
 
 type Props = {
   handwritingStyle: string;
@@ -95,19 +103,17 @@ export function StepHandwriting({ handwritingStyle, onChange }: Props) {
             const value = `default:${d.slug}`;
             const selected = handwritingStyle === value;
             return (
-              <button
+              <div
                 key={d.slug}
-                type="button"
+                role="button"
+                tabIndex={0}
                 onClick={() => onChange(value)}
-                className={`w-40 rounded-md border p-2 text-left ${selected ? "border-primary ring-2 ring-primary" : ""}`}
+                onKeyDown={(e) => selectKeyDown(e, () => onChange(value))}
+                className={`w-40 cursor-pointer rounded-md border p-2 text-left ${selected ? "border-primary ring-2 ring-primary" : ""}`}
               >
-                <img
-                  src={d.preview_url}
-                  alt={d.label}
-                  className="aspect-[4/3] w-full rounded object-cover"
-                />
+                <SampleThumbnail src={d.preview_url} fullSrc={d.preview_url} alt={d.label} />
                 <p className="mt-1 line-clamp-2 min-h-8 text-xs">{d.label}</p>
-              </button>
+              </div>
             );
           })}
         </div>
@@ -123,24 +129,26 @@ export function StepHandwriting({ handwritingStyle, onChange }: Props) {
               const value = `saved:${s.sample_id}`;
               const selected = handwritingStyle === value;
               return (
-                <button
+                <div
                   key={s.sample_id}
-                  type="button"
+                  role="button"
+                  tabIndex={0}
                   onClick={() => onChange(value)}
-                  className={`w-40 rounded-md border p-2 text-left ${selected ? "border-primary ring-2 ring-primary" : ""}`}
+                  onKeyDown={(e) => selectKeyDown(e, () => onChange(value))}
+                  className={`w-40 cursor-pointer rounded-md border p-2 text-left ${selected ? "border-primary ring-2 ring-primary" : ""}`}
                 >
-                  <img
+                  <SampleThumbnail
                     src={s.sample_thumb_url ?? s.sample_url}
+                    fullSrc={s.sample_url}
                     alt={s.label}
-                    className="aspect-[4/3] w-full rounded object-cover"
-                    onError={(e) => {
+                    onImgError={(e) => {
                       if (e.currentTarget.src !== s.sample_url) {
                         e.currentTarget.src = s.sample_url;
                       }
                     }}
                   />
                   <p className="mt-1 line-clamp-2 min-h-8 text-xs">{s.label}</p>
-                </button>
+                </div>
               );
             })}
           </div>
