@@ -6,6 +6,7 @@ export type SavedSampleOption = {
   sample_id: string;
   label: string;
   sample_url: string;
+  sample_thumb_url: string | null;
   created_at: string;
 };
 

@@ -101,8 +101,12 @@ export function StepHandwriting({ handwritingStyle, onChange }: Props) {
                 onClick={() => onChange(value)}
                 className={`w-40 rounded-md border p-2 text-left ${selected ? "border-primary ring-2 ring-primary" : ""}`}
               >
-                <img src={d.preview_url} alt={d.label} className="w-full rounded" />
-                <p className="mt-1 text-xs">{d.label}</p>
+                <img
+                  src={d.preview_url}
+                  alt={d.label}
+                  className="aspect-[4/3] w-full rounded object-cover"
+                />
+                <p className="mt-1 line-clamp-2 min-h-8 text-xs">{d.label}</p>
               </button>
             );
           })}
@@ -125,8 +129,17 @@ export function StepHandwriting({ handwritingStyle, onChange }: Props) {
                   onClick={() => onChange(value)}
                   className={`w-40 rounded-md border p-2 text-left ${selected ? "border-primary ring-2 ring-primary" : ""}`}
                 >
-                  <img src={s.sample_url} alt={s.label} className="w-full rounded" />
-                  <p className="mt-1 text-xs">{s.label}</p>
+                  <img
+                    src={s.sample_thumb_url ?? s.sample_url}
+                    alt={s.label}
+                    className="aspect-[4/3] w-full rounded object-cover"
+                    onError={(e) => {
+                      if (e.currentTarget.src !== s.sample_url) {
+                        e.currentTarget.src = s.sample_url;
+                      }
+                    }}
+                  />
+                  <p className="mt-1 line-clamp-2 min-h-8 text-xs">{s.label}</p>
                 </button>
               );
             })}
