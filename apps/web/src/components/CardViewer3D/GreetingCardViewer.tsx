@@ -156,9 +156,13 @@ function CoverPanel({
   // The closed reference (CLOSED_COVER = 180°) reaches the camera-facing -Z face via a
   // rotation around hingeAxis. Around Y that only mirrors X (which the box's default -Z
   // UV already accounts for); around X it instead flips Y (vertical) — so on a top hinge
-  // the design would render upside down unless we counter that with a vertical texture flip.
+  // the design would render upside down, *and* the box's default -Z horizontal mirror is
+  // never canceled out (that only happens to work for the Y-axis case), leaving the design
+  // reflected left-to-right too. Counter both explicitly for the top-hinge (landscape) case.
   if (hingeAxis === "x") {
     designTexture.flipY = false;
+    designTexture.repeat.x = -1;
+    designTexture.offset.x = 1;
     designTexture.needsUpdate = true;
   }
   const hoverCursor = useHoverCursor();
