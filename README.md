@@ -4,11 +4,11 @@ Personalized greeting cards and postcards, written in a real person's handwritin
 
 Sign in with Google, save handwriting samples (or pick a default style), write a message, and Penmanship generates a card with your message rendered in that handwriting — previewed in an interactive 3D viewer and shareable via a private link.
 
-**Demo:** _coming soon at [penmanship.me](https://penmanship.me)_
+**Demo:** [penmanship.me](https://penmanship.me)
 
 ## Hackathon
 
-_Built for [hackathon name] — TODO: add a short blurb about the event and what inspired this project._
+Built for [Backblaze Generative Media Hackathon: Build with Genblaze on B2](https://backblaze-generative-media.devpost.com/)
 
 ## Tech stack
 
