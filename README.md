@@ -6,6 +6,8 @@ Sign in with Google, save handwriting samples (or pick a default style), write a
 
 **Demo:** [penmanship.me](https://penmanship.me)
 
+**Demo video:** https://www.youtube.com/watch?v=qWOr3CFoWrs
+
 ## Hackathon
 
 Built for [Backblaze Generative Media Hackathon: Build with Genblaze on B2](https://backblaze-generative-media.devpost.com/)
