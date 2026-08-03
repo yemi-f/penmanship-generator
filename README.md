@@ -8,6 +8,11 @@ Sign in with Google, save handwriting samples (or pick a default style), write a
 
 **Demo video:** https://www.youtube.com/watch?v=qWOr3CFoWrs
 
+## Some cards created with Penmanship (public share URL)
+- **Postcard**: https://penmanship.me/share/H1hqdKNEZxjM3AlHHeDS-R8d
+
+- **Greeting Card**: https://penmanship.me/share/d987iiLD3ih0b804Kck-Wfke
+
 ## Hackathon
 
 Built for [Backblaze Generative Media Hackathon: Build with Genblaze on B2](https://backblaze-generative-media.devpost.com/)
