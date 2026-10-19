@@ -13,6 +13,28 @@ Sign in with Google, save handwriting samples (or pick a default style), write a
 
 - **Greeting Card**: https://penmanship.me/share/d987iiLD3ih0b804Kck-Wfke
 
+## Screenshots
+
+**Share page** — recipients open the card in an interactive 3D viewer, no account needed
+
+![Share page with 3D card viewer](docs/screenshots/share-page.gif)
+
+**Dashboard** — every card you've created, with a copy-able share link
+
+![Dashboard showing created cards](docs/screenshots/dashboard-cards.png)
+
+**Handwriting samples** — upload your own handwriting to use on cards
+
+![Handwriting samples tab](docs/screenshots/handwriting-samples.png)
+
+**Create a card** — step-by-step: card type, handwriting, design, message, generate
+
+![Card creation flow](docs/screenshots/create-card.png)
+
+**Edit a card** — change the design or message; only the changed side is regenerated
+
+![Edit card page](docs/screenshots/edit-card.png)
+
 ## Hackathon
 
 Built for [Backblaze Generative Media Hackathon: Build with Genblaze on B2](https://backblaze-generative-media.devpost.com/)
